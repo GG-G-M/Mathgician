@@ -1,0 +1,5 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:TextField label="Angle (degrees)" placeholder-text="Yurrr" name="angleField" hide-placeholder-on-focus="false" style="height: 41px; flex-direction: row; align-items: center; align-self: stretch;" />
+    <engine:TextField label="Velocity (m/s)" placeholder-text="Guurr" name="velocityField" style="align-self: stretch;" />
+    <engine:Button text="FIRE!" name="fireButton" style="height: 37px; width: 340px; text-overflow: clip; white-space: nowrap;" />
+</engine:UXML>
