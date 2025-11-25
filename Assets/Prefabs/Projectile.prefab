@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1719395962179590319}
   - component: {fileID: 7040496470492795929}
   - component: {fileID: 3287094445926440455}
+  - component: {fileID: -534224179781652135}
   m_Layer: 0
   m_Name: Projectile
   m_TagString: Untagged
@@ -29,7 +30,7 @@ Transform:
   m_GameObject: {fileID: 7670774952856540694}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.211, y: 0.98873395, z: -0.0010442734}
+  m_LocalPosition: {x: 8.517965, y: -4.3452325, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -136,3 +137,16 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-534224179781652135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7670774952856540694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9503b88a52f50a54ba8de3e4b35e9ff5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  trailInstance: {fileID: 3892546297799999514, guid: d77b4a82ac1d1c643a63b847416aa62a, type: 3}
