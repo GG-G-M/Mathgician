@@ -12,6 +12,9 @@ public class PlayerLauncher : MonoBehaviour
 
     [Header("Trail Prefab")]
     public GameObject trailPrefab;
+    
+    [Header("Camera")]
+    public CameraHandler cameraHandler; // Reference to camera
 
     private TextField angleField;
     private TextField velocityField;
@@ -32,6 +35,20 @@ public class PlayerLauncher : MonoBehaviour
             fireButton.clicked += FireProjectile;
         else
             Debug.LogError("FireButton not found in UI Document!");
+            
+        // Auto-find camera if not assigned
+        if (cameraHandler == null)
+        {
+            cameraHandler = FindFirstObjectByType<CameraHandler>();
+            if (cameraHandler != null)
+            {
+                Debug.Log("CameraHandler auto-found!");
+            }
+            else
+            {
+                Debug.LogWarning("CameraHandler not found! Camera following won't work.");
+            }
+        }
     }
 
     private void FireProjectile()
@@ -75,26 +92,25 @@ public class PlayerLauncher : MonoBehaviour
         if (playerCol != null && projCol != null)
             Physics.IgnoreCollision(playerCol, projCol);
 
-        // Spawn and setup trail (WITH DEBUG)
+        // Spawn and setup trail
         if (trailPrefab != null)
         {
             currentTrail = Instantiate(trailPrefab, currentProjectile.transform.position, Quaternion.identity);
-            Debug.Log($"Trail spawned: {currentTrail != null}");
             
-            // Make trail follow projectile
             ProjectileTrailFollower follower = currentTrail.GetComponent<ProjectileTrailFollower>();
             if (follower == null)
             {
                 follower = currentTrail.AddComponent<ProjectileTrailFollower>();
-                Debug.Log("Added ProjectileTrailFollower component");
             }
             
             follower.target = currentProjectile.transform;
-            Debug.Log($"Trail follower target set: {follower.target != null}");
         }
-        else
+        
+        // ★★★ TELL CAMERA TO FOLLOW THIS PROJECTILE ★★★
+        if (cameraHandler != null)
         {
-            Debug.LogError("Trail Prefab not assigned in PlayerLauncher!");
+            cameraHandler.NotifyProjectileFired(currentProjectile.transform);
+            Debug.Log("✅ Notified camera about new projectile!");
         }
     }
 }

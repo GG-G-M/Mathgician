@@ -26,8 +26,8 @@ public class Projectile : MonoBehaviour
         // Better collision detection
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         
-        // Get distance display reference
-        distanceDisplay = FindObjectOfType<DistanceDisplay>();
+        // Get distance display reference - FIXED LINE
+        distanceDisplay = FindFirstObjectByType<DistanceDisplay>();
         
         if (distanceDisplay == null)
         {

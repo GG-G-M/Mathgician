@@ -1,9 +1,15 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <engine:TextField label="Angle (degrees)" placeholder-text="Yurrr" name="angleField" hide-placeholder-on-focus="false" style="height: 41px; flex-direction: row; align-items: center; align-self: stretch;" />
-    <engine:TextField label="Velocity (m/s)" placeholder-text="Guurr" name="velocityField" style="align-self: stretch;" />
-    <engine:Button text="FIRE!" name="fireButton" style="height: 37px; width: 340px; text-overflow: clip; white-space: nowrap;" />
+    <engine:GroupBox style="width: 360px; position: absolute; top: auto; left: 20%; bottom: 0; right: auto; flex-direction: column; flex-wrap: wrap; align-items: center;">
+        <engine:TextField label="Velocity (m/s)" placeholder-text="Guurr" name="velocityField" style="align-self: stretch;" />
+        <engine:TextField label="Angle (degrees)" placeholder-text="Yurrr" name="angleField" hide-placeholder-on-focus="false" style="height: 41px; flex-direction: row; align-items: center; align-self: stretch;" />
+        <engine:GroupBox focusable="true" style="flex-direction: column-reverse; flex-wrap: nowrap; flex-basis: auto; align-items: auto; align-self: flex-start; align-content: auto; justify-content: space-evenly;">
+            <engine:Toggle label="Follow Projectile" name="followProjectileToggle" style="align-items: center; flex-direction: row; width: 184px; justify-content: center; align-self: center; position: absolute; top: 9px; left: 154px; overflow: hidden; visibility: visible;" />
+            <engine:Button text="FIRE!" name="fireButton" style="height: 37px; width: 134px; text-overflow: clip; white-space: nowrap; justify-content: flex-start; align-items: auto;" />
+        </engine:GroupBox>
+    </engine:GroupBox>
     <engine:Label text="Straight Distance: 0.0m" name="straightDistanceLabel" />
     <engine:Label text="Horizontal Path: 0.0m" name="horizontalDistanceLabel" />
+    <engine:Label text="Vertical Distance: 0.0m&#10;" name="verticalDistanceLabel" />
     <engine:Label text="Proj Horizontal: 0.00m" name="projectileHorizontalLabel" />
     <engine:Label text="Proj Trajectory: 0.00m" name="projectileTrajectoryLabel" focusable="true" />
 </engine:UXML>

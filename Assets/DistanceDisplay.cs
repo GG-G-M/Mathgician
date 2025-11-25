@@ -17,6 +17,7 @@ public class DistanceDisplay : MonoBehaviour
     // UI Elements
     private Label straightDistanceText;
     private Label horizontalDistanceText;
+    private Label verticalDistanceText;
     private Label projectileHorizontalText;
     private Label projectileTrajectoryText;
 
@@ -26,6 +27,7 @@ public class DistanceDisplay : MonoBehaviour
         var root = uiDocument.rootVisualElement;
         straightDistanceText = root.Q<Label>("straightDistanceLabel");
         horizontalDistanceText = root.Q<Label>("horizontalDistanceLabel");
+        verticalDistanceText = root.Q<Label>("verticalDistanceLabel");
         projectileHorizontalText = root.Q<Label>("projectileHorizontalLabel");
         projectileTrajectoryText = root.Q<Label>("projectileTrajectoryLabel");
         
@@ -66,12 +68,16 @@ public class DistanceDisplay : MonoBehaviour
     {
         float straightDistance = Vector3.Distance(playerA.position, playerB.position);
         float horizontalPathDistance = CalculateHorizontalPathDistance();
+        float verticalDistance = CalculateVerticalDistance();
         
         if (straightDistanceText != null)
             straightDistanceText.text = $"Straight Distance: {straightDistance:F1}m";
         
         if (horizontalDistanceText != null)
             horizontalDistanceText.text = $"Horizontal Path: {horizontalPathDistance:F1}m";
+            
+        if (verticalDistanceText != null)
+            verticalDistanceText.text = $"Vertical Distance: {verticalDistance:F1}m";
     }
     
     private float CalculateHorizontalPathDistance()
@@ -85,6 +91,15 @@ public class DistanceDisplay : MonoBehaviour
         float verticalB = Mathf.Abs(playerB.position.y - horizontalLevel);
         
         return verticalA + horizontal + verticalB;
+    }
+    
+    private float CalculateVerticalDistance()
+    {
+        // Calculate the vertical height difference between Player A and Player B
+        // This shows how much higher/lower Player A is compared to Player B
+        float verticalDistance = playerA.position.y - playerB.position.y;
+        
+        return verticalDistance;
     }
     
     private void UpdateStraightLine()
