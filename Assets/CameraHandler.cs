@@ -5,7 +5,7 @@ public class CameraHandler : MonoBehaviour
 {
     [Header("Target & Offset")]
     public Transform cameraTarget;
-    public Vector3 startOffset = new Vector3(0, 0, -20);
+    public Vector3 startOffset = new Vector3(0, 0, -10);
     public float smoothSpeed = 0.01f;
 
     [Header("Drag & Scroll Settings")]
@@ -27,6 +27,9 @@ public class CameraHandler : MonoBehaviour
     private Vector3 freeModePosition;
     private bool isDragging = false;
     private Vector3 dragStartPosition;
+    
+    // ★★★ NEW: Remember current zoom offset ★★★
+    private Vector3 currentOffset;
 
     private void Start()
     {
@@ -37,7 +40,8 @@ public class CameraHandler : MonoBehaviour
         }
 
         currentTarget = cameraTarget;
-        initialPosition = cameraTarget.position + startOffset;
+        currentOffset = startOffset; // Initialize with default offset
+        initialPosition = cameraTarget.position + currentOffset;
         transform.position = initialPosition;
 
         SetupUIToggle();
@@ -72,6 +76,12 @@ public class CameraHandler : MonoBehaviour
             Debug.Log("✅ Follow mode ENABLED");
             isInFreeMode = false;
             
+            // ★★★ UPDATE: Calculate current offset before following ★★★
+            if (currentTarget != null)
+            {
+                currentOffset = transform.position - currentTarget.position;
+            }
+            
             // Try to find and follow an existing projectile immediately
             FindAndFollowExistingProjectile();
         }
@@ -82,12 +92,15 @@ public class CameraHandler : MonoBehaviour
             // If we were following a projectile, STAY at current position
             if (currentTarget != null && currentTarget.GetComponent<Projectile>() != null)
             {
+                // ★★★ UPDATE: Save current offset before entering free mode ★★★
+                UpdateCurrentOffset();
+                
                 // Enter free mode and lock current camera position
                 isInFreeMode = true;
                 freeModePosition = transform.position;
                 currentTarget = null;
                 
-                Debug.Log("📍 Camera locked at current position");
+                Debug.Log("🔒 Camera locked at current position");
             }
         }
     }
@@ -133,9 +146,12 @@ public class CameraHandler : MonoBehaviour
         }
     }
 
-    // ★★★ PUBLIC METHOD - Called by PlayerLauncher when firing ★★★
+    // ☆☆☆ PUBLIC METHOD - Called by PlayerLauncher when firing ☆☆☆
     public void NotifyProjectileFired(Transform projectileTransform)
     {
+        // ★★★ UPDATE: Save current offset before switching targets ★★★
+        UpdateCurrentOffset();
+        
         // Only follow if toggle is enabled
         if (followModeEnabled)
         {
@@ -161,6 +177,10 @@ public class CameraHandler : MonoBehaviour
             if (!IsValidProjectile(currentTarget))
             {
                 Debug.Log("Projectile stopped/destroyed - entering free roam mode");
+                
+                // ★★★ UPDATE: Save offset before losing target ★★★
+                UpdateCurrentOffset();
+                
                 currentTarget = null;
                 isInFreeMode = true;
                 freeModePosition = transform.position;
@@ -181,8 +201,8 @@ public class CameraHandler : MonoBehaviour
         }
         else if (currentTarget != null && !isDragging)
         {
-            // Follow the current target smoothly
-            Vector3 targetPosition = currentTarget.position + startOffset;
+            // ★★★ UPDATE: Follow with remembered offset instead of startOffset ★★★
+            Vector3 targetPosition = currentTarget.position + currentOffset;
             transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothSpeed);
             
             // For side-scroller: keep camera rotation fixed, don't look at target
@@ -205,11 +225,14 @@ public class CameraHandler : MonoBehaviour
                 isDragging = true;
                 isInFreeMode = true;
                 freeModePosition = transform.position;
+                
+                // ★★★ UPDATE: Save offset before losing target ★★★
+                UpdateCurrentOffset();
                 currentTarget = null;
                 
                 // Lock rotation when entering free mode
                 transform.rotation = Quaternion.Euler(0, 0, 0);
-                Debug.Log("📍 Entered free roam mode (dragging)");
+                Debug.Log("🔒 Entered free roam mode (dragging)");
             }
         }
 
@@ -240,6 +263,12 @@ public class CameraHandler : MonoBehaviour
             Vector3 zoomDir = transform.forward * scroll * scrollSpeed;
             transform.position += zoomDir;
 
+            // ★★★ UPDATE: Update currentOffset when zooming ★★★
+            if (currentTarget != null)
+            {
+                currentOffset = transform.position - currentTarget.position;
+            }
+
             float currentHeight = transform.position.y;
             if (currentHeight < minZoom)
             {
@@ -255,7 +284,7 @@ public class CameraHandler : MonoBehaviour
             {
                 isInFreeMode = true;
                 currentTarget = null;
-                Debug.Log("📍 Entered free roam mode (zooming)");
+                Debug.Log("🔒 Entered free roam mode (zooming)");
             }
             
             freeModePosition = transform.position;
@@ -280,12 +309,24 @@ public class CameraHandler : MonoBehaviour
         currentTarget = cameraTarget;
         isInFreeMode = false;
         followModeEnabled = false;
-        transform.position = cameraTarget.position + startOffset;
+        
+        // ★★★ UPDATE: Use current offset instead of resetting to startOffset ★★★
+        transform.position = cameraTarget.position + currentOffset;
         
         // Keep camera rotation fixed for side-scroller
         transform.rotation = Quaternion.Euler(0, 0, 0);
         
-        Debug.Log("📍 Camera returned to Player");
+        Debug.Log("🏠 Camera returned to Player");
+    }
+    
+    // ★★★ NEW METHOD: Update the current offset based on camera position ★★★
+    private void UpdateCurrentOffset()
+    {
+        if (currentTarget != null)
+        {
+            currentOffset = transform.position - currentTarget.position;
+            Debug.Log($"📏 Offset updated: {currentOffset}");
+        }
     }
 
     private bool IsValidProjectile(Transform potentialTarget)

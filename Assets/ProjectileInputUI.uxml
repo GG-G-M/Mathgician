@@ -12,4 +12,5 @@
     <engine:Label text="Vertical Distance: 0.0m&#10;" name="verticalDistanceLabel" />
     <engine:Label text="Proj Horizontal: 0.00m" name="projectileHorizontalLabel" />
     <engine:Label text="Proj Trajectory: 0.00m" name="projectileTrajectoryLabel" focusable="true" />
+    <engine:DropdownField label="Gamemode" name="gameModeDropdown" style="width: 420px; position: absolute; top: 4px; left: auto; right: 3px; align-self: auto; justify-content: space-evenly; flex-direction: row; align-content: auto; align-items: auto;" />
 </engine:UXML>

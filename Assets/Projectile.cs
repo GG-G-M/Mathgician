@@ -15,6 +15,9 @@ public class Projectile : MonoBehaviour
     
     // Distance display reference
     private DistanceDisplay distanceDisplay;
+    
+    // Turn manager reference
+    private TurnManager turnManager;
 
     private void Start()
     {
@@ -26,13 +29,18 @@ public class Projectile : MonoBehaviour
         // Better collision detection
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         
-        // Get distance display reference - FIXED LINE
+        // Get distance display reference
         distanceDisplay = FindFirstObjectByType<DistanceDisplay>();
         
         if (distanceDisplay == null)
         {
             Debug.LogWarning("DistanceDisplay not found in scene!");
         }
+    }
+    
+    public void SetTurnManager(TurnManager manager)
+    {
+        turnManager = manager;
     }
 
     private void Update()
@@ -61,15 +69,37 @@ public class Projectile : MonoBehaviour
         // Final distance calculation
         CalculateFinalDistances();
         
-        // Check if hit Player B
-        PlayerBHandler playerB = collision.gameObject.GetComponent<PlayerBHandler>();
-        if (playerB != null)
+        // Check if hit a player
+        PlayerHandler playerHandler = collision.gameObject.GetComponent<PlayerHandler>();
+        bool hitPlayer = playerHandler != null;
+        
+        if (hitPlayer)
         {
-            playerB.Die();
-            Debug.Log("HIT! Player B defeated!");
+            playerHandler.Die();
+            Debug.Log($"HIT! {collision.gameObject.name} has been defeated!");
         }
 
         FreezeProjectile();
+        
+        // Notify turn manager that projectile has landed
+        if (turnManager != null)
+        {
+            turnManager.OnProjectileFinished(hitPlayer, collision.gameObject);
+        }
+        
+        // ★★★ Always switch turns after landing (with delay for animation) ★★★
+        // Use longer delay if hit player (for death animation), shorter for miss
+        float switchDelay = hitPlayer ? 2f : 1.5f;
+        Invoke(nameof(TriggerTurnSwitch), switchDelay);
+    }
+    
+    private void TriggerTurnSwitch()
+    {
+        if (turnManager != null)
+        {
+            // Only switch turns if game isn't over
+            turnManager.SwitchTurnsAfterLanding();
+        }
     }
 
     private void CalculateFinalDistances()

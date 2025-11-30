@@ -401,6 +401,9 @@ MonoBehaviour:
   uiDocument: {fileID: 2055560783}
   straightLine: {fileID: 291831601}
   horizontalLine: {fileID: 138486658}
+  textFont: {fileID: 0}
+  fontSize: 20
+  textColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!120 &291831601
 LineRenderer:
   serializedVersion: 2
@@ -535,6 +538,8 @@ GameObject:
   - component: {fileID: 869808523}
   - component: {fileID: 869808522}
   - component: {fileID: 869808525}
+  - component: {fileID: 869808526}
+  - component: {fileID: 869808527}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -613,7 +618,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2055560782}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &869808525
@@ -636,6 +642,46 @@ MonoBehaviour:
   minZoom: 3
   maxZoom: 40
   uiDocument: {fileID: 2055560783}
+--- !u!114 &869808526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 869808521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c022922b48e6eec4792033c9e5c6ddea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerA: {fileID: 1473696175}
+  playerB: {fileID: 1632359921}
+  playerALauncher: {fileID: 1473696178}
+  playerBLauncher: {fileID: 1632359923}
+  playerAHandler: {fileID: 1473696179}
+  playerBHandler: {fileID: 1632359922}
+  cameraHandler: {fileID: 869808525}
+  uiDocument: {fileID: 2055560783}
+  gameModeManager: {fileID: 869808527}
+  fireCooldown: 2
+--- !u!114 &869808527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 869808521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e94104dbed5abe469482c05511f3e16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 2055560783}
+  currentGameMode: 0
+  minAngle: 20
+  maxAngle: 70
+  minVelocity: 10
+  maxVelocity: 50
 --- !u!1 &1138402266
 GameObject:
   m_ObjectHideFlags: 0
@@ -793,6 +839,7 @@ GameObject:
   - component: {fileID: 1473696173}
   - component: {fileID: 1473696172}
   - component: {fileID: 1473696178}
+  - component: {fileID: 1473696179}
   m_Layer: 0
   m_Name: Player A
   m_TagString: Untagged
@@ -883,11 +930,10 @@ Transform:
   m_GameObject: {fileID: 1473696171}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7, y: 3, z: 0}
+  m_LocalPosition: {x: -7, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2055560782}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1473696178
@@ -907,6 +953,23 @@ MonoBehaviour:
   firePoint: {fileID: 1473696175}
   trailPrefab: {fileID: 8930143989943562961, guid: 49bd992ebc77df64582c3da31f223e02, type: 3}
   cameraHandler: {fileID: 869808525}
+  turnManager: {fileID: 869808526}
+  gameModeManager: {fileID: 869808527}
+  isFacingLeft: 0
+--- !u!114 &1473696179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473696171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7002bad29b2294b845cdb969628906, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerName: Player
+  isAlive: 1
 --- !u!1 &1632359916
 GameObject:
   m_ObjectHideFlags: 0
@@ -921,6 +984,7 @@ GameObject:
   - component: {fileID: 1632359918}
   - component: {fileID: 1632359917}
   - component: {fileID: 1632359922}
+  - component: {fileID: 1632359923}
   m_Layer: 0
   m_Name: Player B
   m_TagString: Untagged
@@ -1056,7 +1120,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d7002bad29b2294b845cdb969628906, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerName: Player
   isAlive: 1
+--- !u!114 &1632359923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1632359916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98d0f12519861cf4d81e0f1caf674717, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiDocument: {fileID: 2055560783}
+  projectilePrefab: {fileID: 7670774952856540694, guid: 57f17f2d49844924f883119ef58b5c76, type: 3}
+  firePoint: {fileID: 1632359921}
+  trailPrefab: {fileID: 8930143989943562961, guid: 49bd992ebc77df64582c3da31f223e02, type: 3}
+  cameraHandler: {fileID: 869808525}
+  turnManager: {fileID: 869808526}
+  gameModeManager: {fileID: 869808527}
+  isFacingLeft: 1
 --- !u!1 &2055560781
 GameObject:
   m_ObjectHideFlags: 0
@@ -1082,12 +1167,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2055560781}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -7, y: 2, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1473696175}
+  m_Father: {fileID: 869808524}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2055560783
 MonoBehaviour:

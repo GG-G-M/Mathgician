@@ -14,7 +14,16 @@ public class PlayerLauncher : MonoBehaviour
     public GameObject trailPrefab;
     
     [Header("Camera")]
-    public CameraHandler cameraHandler; // Reference to camera
+    public CameraHandler cameraHandler;
+    
+    [Header("Turn Manager")]
+    public TurnManager turnManager;
+    
+    [Header("Game Mode Manager")]
+    public GameModeManager gameModeManager;
+    
+    [Header("Player Settings")]
+    public bool isFacingLeft = false; // Set TRUE for Player B, FALSE for Player A
 
     private TextField angleField;
     private TextField velocityField;
@@ -49,26 +58,92 @@ public class PlayerLauncher : MonoBehaviour
                 Debug.LogWarning("CameraHandler not found! Camera following won't work.");
             }
         }
+        
+        // Auto-find turn manager if not assigned
+        if (turnManager == null)
+        {
+            turnManager = FindFirstObjectByType<TurnManager>();
+            if (turnManager != null)
+            {
+                Debug.Log("TurnManager auto-found!");
+            }
+            else
+            {
+                Debug.LogWarning("TurnManager not found! Turn system won't work.");
+            }
+        }
+        
+        // Auto-find game mode manager if not assigned
+        if (gameModeManager == null)
+        {
+            gameModeManager = FindFirstObjectByType<GameModeManager>();
+            if (gameModeManager != null)
+            {
+                Debug.Log("GameModeManager auto-found!");
+            }
+            else
+            {
+                Debug.LogWarning("GameModeManager not found! Using manual input only.");
+            }
+        }
     }
 
     private void FireProjectile()
     {
+        // ★★★ CHECK 1: Verify this launcher is enabled (current turn) ★★★
+        if (!enabled)
+        {
+            Debug.LogWarning("This launcher is disabled - not this player's turn!");
+            return;
+        }
+        
+        // ★★★ CHECK 2: Check if this player can fire ★★★
+        if (turnManager != null && !turnManager.CanCurrentPlayerFire())
+        {
+            Debug.LogWarning("Cannot fire - not your turn or on cooldown!");
+            return;
+        }
+        
+        Debug.Log($"🔥 {gameObject.name} is firing!");
+        
         // Clean up previous projectile and trail
         if (currentProjectile != null)
             Destroy(currentProjectile);
         if (currentTrail != null)
             Destroy(currentTrail);
 
-        // Validate input
-        if (!float.TryParse(angleField.value, out float angle))
+        // Get angle and velocity from game mode manager
+        float angle, velocity;
+        
+        if (gameModeManager != null)
         {
-            Debug.LogWarning("Invalid angle input!");
-            return;
+            angle = gameModeManager.GetAngle();
+            velocity = gameModeManager.GetVelocity();
+            
+            if (angle < 0)
+            {
+                Debug.LogWarning("Invalid angle input!");
+                return;
+            }
+            if (velocity < 0)
+            {
+                Debug.LogWarning("Invalid velocity input!");
+                return;
+            }
         }
-        if (!float.TryParse(velocityField.value, out float velocity))
+        else
         {
-            Debug.LogWarning("Invalid velocity input!");
-            return;
+            // Fallback to manual input if no game mode manager
+            if (!float.TryParse(angleField.value, out angle))
+            {
+                Debug.LogWarning("Invalid angle input!");
+                return;
+            }
+            if (!float.TryParse(velocityField.value, out velocity))
+            {
+                Debug.LogWarning("Invalid velocity input!");
+                return;
+            }
         }
 
         // Spawn projectile
@@ -82,9 +157,21 @@ public class PlayerLauncher : MonoBehaviour
             return;
         }
 
-        float rad = angle * Mathf.Deg2Rad;
+        // ★★★ FIX: Flip angle for Player B (facing left) ★★★
+        float actualAngle = angle;
+        if (isFacingLeft)
+        {
+            // Player B: Convert angle to fire leftward
+            // 45° becomes 135° (180° - 45°)
+            actualAngle = 180f - angle;
+            Debug.Log($"🔄 Player B angle flipped: {angle}° → {actualAngle}°");
+        }
+
+        float rad = actualAngle * Mathf.Deg2Rad;
         Vector3 direction = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0);
         rb.linearVelocity = direction * velocity;
+        
+        Debug.Log($"🚀 Firing at angle: {actualAngle}°, velocity: {velocity} m/s, direction: {direction}");
 
         // Prevent collision with player
         Collider playerCol = GetComponent<Collider>();
@@ -106,11 +193,24 @@ public class PlayerLauncher : MonoBehaviour
             follower.target = currentProjectile.transform;
         }
         
-        // ★★★ TELL CAMERA TO FOLLOW THIS PROJECTILE ★★★
+        // Set the projectile's owner (for turn manager)
+        Projectile projectileScript = currentProjectile.GetComponent<Projectile>();
+        if (projectileScript != null && turnManager != null)
+        {
+            projectileScript.SetTurnManager(turnManager);
+        }
+        
+        // Tell camera to follow this projectile
         if (cameraHandler != null)
         {
             cameraHandler.NotifyProjectileFired(currentProjectile.transform);
             Debug.Log("✅ Notified camera about new projectile!");
+        }
+        
+        // Notify turn manager that projectile was fired
+        if (turnManager != null)
+        {
+            turnManager.OnProjectileFired();
         }
     }
 }
