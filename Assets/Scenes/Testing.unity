@@ -629,10 +629,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraTarget: {fileID: 1473696175}
-  startOffset: {x: 0, y: 0, z: -10}
-  smoothSpeed: 1
-  dragSpeed: 5
-  scrollSpeed: 5
+  startOffset: {x: 0, y: 0, z: -20}
+  smoothSpeed: 0.01
+  dragSpeed: 20
+  scrollSpeed: 20
   minZoom: 3
   maxZoom: 40
   uiDocument: {fileID: 2055560783}
@@ -883,7 +883,7 @@ Transform:
   m_GameObject: {fileID: 1473696171}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.3, z: 0}
+  m_LocalPosition: {x: -7, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -905,8 +905,8 @@ MonoBehaviour:
   uiDocument: {fileID: 2055560783}
   projectilePrefab: {fileID: 7670774952856540694, guid: 57f17f2d49844924f883119ef58b5c76, type: 3}
   firePoint: {fileID: 1473696175}
-  trailPrefab: {fileID: 3892546297799999514, guid: d77b4a82ac1d1c643a63b847416aa62a, type: 3}
-  cameraHandler: {fileID: 0}
+  trailPrefab: {fileID: 8930143989943562961, guid: 49bd992ebc77df64582c3da31f223e02, type: 3}
+  cameraHandler: {fileID: 869808525}
 --- !u!1 &1632359916
 GameObject:
   m_ObjectHideFlags: 0

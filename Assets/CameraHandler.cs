@@ -5,7 +5,7 @@ public class CameraHandler : MonoBehaviour
 {
     [Header("Target & Offset")]
     public Transform cameraTarget;
-    public Vector3 startOffset = new Vector3(0, 0, -10);
+    public Vector3 startOffset = new Vector3(0, 0, -20);
     public float smoothSpeed = 0.01f;
 
     [Header("Drag & Scroll Settings")]
