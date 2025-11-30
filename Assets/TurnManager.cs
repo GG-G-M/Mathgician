@@ -44,8 +44,19 @@ public class TurnManager : MonoBehaviour
     
     private void SetupUI()
     {
+        if (uiDocument == null)
+        {
+            Debug.LogWarning("⚠️ UIDocument not assigned to TurnManager!");
+            return;
+        }
+        
         var root = uiDocument.rootVisualElement;
         fireButton = root.Q<Button>("fireButton");
+        
+        if (fireButton == null)
+        {
+            Debug.LogWarning("⚠️ fireButton not found in UI!");
+        }
         
         // Query for existing UI labels (optional - won't create if not found)
         turnIndicatorLabel = root.Q<Label>("turnIndicator");
@@ -66,7 +77,7 @@ public class TurnManager : MonoBehaviour
     
     private void SetupPlayerHandlers()
     {
-        if (playerAHandler == null && playerA != null)
+        if (playerA != null && playerAHandler == null)
         {
             playerAHandler = playerA.GetComponent<PlayerHandler>();
             if (playerAHandler == null)
@@ -76,7 +87,7 @@ public class TurnManager : MonoBehaviour
             }
         }
         
-        if (playerBHandler == null && playerB != null)
+        if (playerB != null && playerBHandler == null)
         {
             playerBHandler = playerB.GetComponent<PlayerHandler>();
             if (playerBHandler == null)
@@ -98,19 +109,15 @@ public class TurnManager : MonoBehaviour
             if (cooldownTimer <= 0f)
             {
                 canFire = true;
-                cooldownLabel.style.display = DisplayStyle.None;
-                fireButton.SetEnabled(true);
+                
+                if (fireButton != null)
+                {
+                    fireButton.SetEnabled(true);
+                }
+                
                 UpdateTurnUI();
+                Debug.Log("✅ Cooldown finished - Ready to fire!");
             }
-            else
-            {
-                cooldownLabel.text = $"Cooldown: {cooldownTimer:F1}s";
-            }
-        }
-        else if (cooldownTimer > 0f)
-        {
-            // Console log for cooldown when no UI label
-            Debug.Log($"⏳ Cooldown: {cooldownTimer:F1}s");
         }
     }
     
@@ -120,10 +127,13 @@ public class TurnManager : MonoBehaviour
         
         canFire = false;
         cooldownTimer = fireCooldown;
-        fireButton.SetEnabled(false);
-        cooldownLabel.style.display = DisplayStyle.Flex;
         
-        Debug.Log($"Projectile fired! Cooldown started: {fireCooldown}s");
+        if (fireButton != null)
+        {
+            fireButton.SetEnabled(false);
+        }
+        
+        Debug.Log($"🚀 Projectile fired! Cooldown started: {fireCooldown}s");
     }
     
     public void OnProjectileFinished(bool hitPlayer, GameObject hitObject)
@@ -162,8 +172,16 @@ public class TurnManager : MonoBehaviour
         
         canFire = true;
         cooldownTimer = 0f;
-        cooldownLabel.style.display = DisplayStyle.None;
-        fireButton.SetEnabled(true);
+        
+        if (cooldownLabel != null)
+        {
+            cooldownLabel.style.display = DisplayStyle.None;
+        }
+        
+        if (fireButton != null)
+        {
+            fireButton.SetEnabled(true);
+        }
         
         isPlayerATurn = !isPlayerATurn;
         
@@ -176,7 +194,7 @@ public class TurnManager : MonoBehaviour
             SwitchToPlayerB();
         }
         
-        // ★★★ Generate new values for partial modes ★★★
+        // Generate new values for partial modes
         if (gameModeManager != null)
         {
             gameModeManager.ApplyGameMode();
@@ -190,7 +208,7 @@ public class TurnManager : MonoBehaviour
         if (playerBLauncher != null)
             playerBLauncher.enabled = false;
         
-        if (cameraHandler != null)
+        if (cameraHandler != null && playerA != null)
         {
             cameraHandler.cameraTarget = playerA;
             cameraHandler.transform.position = playerA.position + cameraHandler.startOffset;
@@ -207,7 +225,7 @@ public class TurnManager : MonoBehaviour
         if (playerALauncher != null)
             playerALauncher.enabled = false;
         
-        if (cameraHandler != null)
+        if (cameraHandler != null && playerB != null)
         {
             cameraHandler.cameraTarget = playerB;
             cameraHandler.transform.position = playerB.position + cameraHandler.startOffset;
@@ -236,7 +254,11 @@ public class TurnManager : MonoBehaviour
     private void DeclareVictory(string winner)
     {
         gameOver = true;
-        fireButton.SetEnabled(false);
+        
+        if (fireButton != null)
+        {
+            fireButton.SetEnabled(false);
+        }
         
         Debug.Log($"🎉🏆 GAME OVER - {winner} WINS! 🏆🎉");
         
