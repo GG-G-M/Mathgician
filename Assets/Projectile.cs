@@ -130,6 +130,13 @@ public class Projectile : MonoBehaviour
             physicsDisplay.OnProjectileLanded();
         }
         
+        // Trigger camera shake
+        TurnManager turnMgr = FindFirstObjectByType<TurnManager>();
+        if (turnMgr != null && turnMgr.cameraShake != null)
+        {
+            turnMgr.cameraShake.TriggerShake(hitPlayer);
+        }
+        
         // Notify turn manager that projectile has landed
         if (turnManager != null)
         {

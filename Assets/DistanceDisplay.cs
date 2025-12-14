@@ -102,6 +102,9 @@ public class DistanceDisplay : MonoBehaviour
         textMesh.alignment = TextAlignment.Center;
         textMesh.characterSize = 0.25f; // ★★★ INCREASED from 0.1f for better visibility
         
+        // Set to UI layer (layer 5) to exclude from post-processing
+        textMesh.gameObject.layer = 5;
+        
         if (textFont != null)
         {
             textMesh.font = textFont;

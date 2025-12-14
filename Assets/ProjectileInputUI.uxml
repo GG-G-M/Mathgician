@@ -29,21 +29,17 @@
 
     <!-- Current Turn Indicator (Top Center, offset to avoid top-right controls) -->
     <engine:Label text="Player A's Turn" name="turnIndicator"
-        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+        style="position: absolute; top: 60px; left: 50%; margin-left: -100px;
             background-color: rgba(0, 0, 0, 0.7);
             color: rgb(255, 235, 120);
             padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px;
-            border-radius: 8px; font-size: 18px; -unity-font-style: bold;" />
+            border-radius: 8px; font-size: 18px; -unity-font-style: bold; width: 200px;
+            -unity-text-align: middle-center;" />
     
     <!-- Formula Guide Button (Below Settings) - Mid Z-index -->
     <engine:Button text="📐 Formulas" name="formulaGuideButton" 
         style="position: absolute; top: 70px; left: 20px; 
             width: 120px; height: 40px; background-color: rgb(50, 150, 200);" />
-    
-    <!-- Refresh Button (Below Formulas) - NEW! -->
-    <engine:Button text="🔄 Refresh" name="refreshButton" 
-        style="position: absolute; top: 120px; left: 20px; 
-            width: 120px; height: 40px; background-color: rgb(200, 150, 50);" />
 
     <!-- Follow Mode Indicator (Top Left) -->
     <engine:Label text="📷 Follow Mode ON" name="followModeIndicator"
@@ -61,31 +57,51 @@
             justify-content: center; align-items: center;
             display: none;">
         
-        <engine:VisualElement style="width: 600px; height: 550px;
+        <engine:ScrollView style="width: 650px; max-height: 80%;
             background-color: rgba(20, 20, 20, 0.98); 
             padding: 30px; border-radius: 15px; 
             border-width: 3px; border-color: rgb(255, 200, 0);">
             
             <engine:Label text="⚙️ SETTINGS" 
                 style="font-size: 28px; -unity-text-align: middle-center; 
-                    color: rgb(255, 200, 0); margin-bottom: 30px;
+                    color: rgb(255, 200, 0); margin-bottom: 20px;
                     -unity-font-style: bold;" />
             
             <engine:DropdownField label="Control Mode" name="controlModeDropdown" 
-                style="margin-bottom: 20px; font-size: 16px; color: rgb(220, 220, 220);" />
+                style="margin-bottom: 15px; font-size: 16px; color: rgb(220, 220, 220);" />
             
             <engine:Label text="Camera Settings" 
                 style="font-size: 18px; color: rgb(100, 255, 200); 
-                    margin-top: 20px; margin-bottom: 15px;
+                    margin-top: 15px; margin-bottom: 10px;
                     -unity-font-style: bold;" />
             
             <engine:Toggle label="Auto Switch Perspective" name="autoSwitchPerspectiveToggle" 
-                style="margin-bottom: 30px; font-size: 14px; color: rgb(220, 220, 220);" />
+                style="margin-bottom: 10px; font-size: 14px; color: rgb(220, 220, 220);" />
+            
+            <engine:Toggle label="Camera Shake" name="cameraShakeToggle" 
+                style="margin-bottom: 15px; font-size: 14px; color: rgb(220, 220, 220);" />
+            
+            <engine:Label text="Graphics Settings" 
+                style="font-size: 18px; color: rgb(100, 255, 200); 
+                    margin-top: 10px; margin-bottom: 10px;
+                    -unity-font-style: bold;" />
+            
+            <engine:Toggle label="Bloom" name="bloomToggle" 
+                style="margin-bottom: 8px; font-size: 14px; color: rgb(220, 220, 220);" />
+            
+            <engine:Toggle label="Vignette" name="vignetteToggle" 
+                style="margin-bottom: 8px; font-size: 14px; color: rgb(220, 220, 220);" />
+            
+            <engine:Toggle label="Motion Blur" name="motionBlurToggle" 
+                style="margin-bottom: 8px; font-size: 14px; color: rgb(220, 220, 220);" />
+            
+            <engine:DropdownField label="Anti-Aliasing" name="antiAliasingDropdown" 
+                style="margin-bottom: 20px; font-size: 14px; color: rgb(220, 220, 220);" />
             
             <engine:Button text="Close" name="closeSettingsButton" 
-                style="margin-top: 20px; height: 50px; font-size: 18px;
-                    background-color: rgb(200, 50, 50);" />
-        </engine:VisualElement>
+                style="margin-top: 10px; height: 50px; font-size: 18px;
+                    background-color: rgb(200, 50, 50); align-self: stretch;" />
+        </engine:ScrollView>
     </engine:VisualElement>
     
     <!-- Formula Guide Panel - FULL SCREEN -->

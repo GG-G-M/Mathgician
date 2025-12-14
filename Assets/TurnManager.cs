@@ -16,6 +16,7 @@ public class TurnManager : MonoBehaviour
     
     [Header("Camera")]
     public CameraHandler cameraHandler;
+    public CameraShake cameraShake;
     
     [Header("UI")]
     public UIDocument uiDocument;
@@ -101,6 +102,17 @@ public class TurnManager : MonoBehaviour
             {
                 autoSwitchPerspective = evt.newValue;
                 Debug.Log($"📷 Auto switch perspective: {(autoSwitchPerspective ? "ENABLED" : "DISABLED")}");
+            });
+        }
+        
+        // Setup camera shake toggle
+        Toggle shakeToggle = root.Q<Toggle>("cameraShakeToggle");
+        if (shakeToggle != null && cameraShake != null)
+        {
+            shakeToggle.value = cameraShake.shakeEnabled;
+            shakeToggle.RegisterValueChangedCallback(evt =>
+            {
+                cameraShake.SetShakeEnabled(evt.newValue);
             });
         }
         
@@ -332,6 +344,16 @@ public class TurnManager : MonoBehaviour
                 Debug.LogWarning("⚠️ SettingsManager not found!");
             }
         }
+    }
+    
+    public bool GetIsPlayerATurn()
+    {
+        return isPlayerATurn;
+    }
+    
+    public Transform GetCurrentPlayer()
+    {
+        return isPlayerATurn ? playerA : playerB;
     }
     
     private void UpdateTurnUI()

@@ -12,6 +12,9 @@ public class SettingsManager : MonoBehaviour
     [Header("UI")]
     public UIDocument uiDocument;
     
+    [Header("Managers")]
+    public PostProcessingManager postProcessingManager;
+    
     [Header("Current Settings")]
     public ControlMode currentControlMode = ControlMode.InputBased;
     
@@ -20,7 +23,6 @@ public class SettingsManager : MonoBehaviour
     private VisualElement settingsPanel;
     private DropdownField controlModeDropdown;
     private Button closeSettingsButton;
-    private Button refreshButton; // ★★★ NEW
     
     // References to other managers
     private PlayerLauncher[] playerLaunchers;
@@ -47,7 +49,6 @@ public class SettingsManager : MonoBehaviour
         settingsPanel = root.Q<VisualElement>("settingsPanel");
         closeSettingsButton = root.Q<Button>("closeSettingsButton");
         controlModeDropdown = root.Q<DropdownField>("controlModeDropdown");
-        refreshButton = root.Q<Button>("refreshButton"); // ★★★ NEW
         
         // Setup settings button
         if (settingsButton != null)
@@ -76,17 +77,6 @@ public class SettingsManager : MonoBehaviour
             closeSettingsButton.clicked += CloseSettingsPanel;
         }
         
-        // ★★★ NEW: Setup refresh button
-        if (refreshButton != null)
-        {
-            refreshButton.clicked += RefreshEverything;
-            Debug.Log("✅ Refresh button found!");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ 'refreshButton' not found in UI! Add a Button with name='refreshButton'");
-        }
-        
         // Setup control mode dropdown
         if (controlModeDropdown != null)
         {
@@ -102,6 +92,25 @@ public class SettingsManager : MonoBehaviour
         else
         {
             Debug.LogWarning("⚠️ 'controlModeDropdown' not found in settingsPanel!");
+        }
+        
+        // Setup anti-aliasing dropdown
+        DropdownField aaDropdown = root.Q<DropdownField>("antiAliasingDropdown");
+        if (aaDropdown != null)
+        {
+            aaDropdown.choices = new System.Collections.Generic.List<string>
+            {
+                "None",
+                "FXAA",
+                "SMAA"
+            };
+            aaDropdown.index = (int)QualitySettings.antiAliasing;
+            aaDropdown.RegisterValueChangedCallback(evt =>
+            {
+                int aaMode = aaDropdown.index;
+                QualitySettings.antiAliasing = aaMode;
+                Debug.Log($"Anti-Aliasing set to: {aaDropdown.value}");
+            });
         }
 
         // Predicted impact toggle removed per request
@@ -167,10 +176,37 @@ public class SettingsManager : MonoBehaviour
         // Re-find all player launchers
         playerLaunchers = FindObjectsByType<PlayerLauncher>(FindObjectsSortMode.None);
         
-        // Re-apply current control mode to all players
+        // Find camera handler
+        CameraHandler cam = FindFirstObjectByType<CameraHandler>();
+        
+        // 1. Reset camera state FIRST
+        if (cam != null)
+        {
+            // Force camera back to current target player
+            TurnManager turnManager = FindFirstObjectByType<TurnManager>();
+            if (turnManager != null)
+            {
+                Transform currentPlayer = turnManager.playerA; // Default to player A
+                if (turnManager.playerB != null)
+                {
+                    // Determine current player based on turn state
+                    currentPlayer = turnManager.GetCurrentPlayer();
+                }
+                
+                // Reset camera to current player with fresh offset
+                cam.SwitchToTargetPreserveZoom(currentPlayer);
+                Debug.Log($"📷 Camera reset to {currentPlayer.name}");
+            }
+            
+            // Refresh camera follow state with full rebind
+            cam.HardRefreshFollowState();
+            Debug.Log("📷 Camera follow state hard refreshed");
+        }
+        
+        // 2. Re-apply current control mode to all players
         ApplyControlMode();
         
-        // Force each launcher to refresh its drag controller
+        // 3. Force each launcher to refresh its drag controller
         foreach (PlayerLauncher launcher in playerLaunchers)
         {
             if (launcher != null)
@@ -178,12 +214,13 @@ public class SettingsManager : MonoBehaviour
                 // Ensure camera handler reference is set
                 if (launcher.cameraHandler == null)
                 {
-                    launcher.cameraHandler = FindFirstObjectByType<CameraHandler>();
+                    launcher.cameraHandler = cam;
                 }
+                
                 DragLaunchController dragController = launcher.GetComponent<DragLaunchController>();
                 if (dragController != null)
                 {
-                    // Toggle off and on to force refresh
+                    // Force full reset
                     dragController.enabled = false;
                     dragController.enabled = (currentControlMode == ControlMode.DragAndLaunch) && launcher.enabled;
                     Debug.Log($"   🔄 Refreshed {launcher.gameObject.name} drag controller: {dragController.enabled}");
@@ -191,14 +228,28 @@ public class SettingsManager : MonoBehaviour
             }
         }
         
-        // Refresh camera follow state to stabilize behavior
-        CameraHandler cam = FindFirstObjectByType<CameraHandler>();
-        if (cam != null)
+        // 4. Clean up any orphaned projectiles
+        Projectile[] projectiles = FindObjectsByType<Projectile>(FindObjectsSortMode.None);
+        foreach (Projectile proj in projectiles)
         {
-            cam.HardRefreshFollowState();
-            Debug.Log("📷 Camera follow state refreshed");
+            if (proj != null && proj.GetComponent<Rigidbody>().isKinematic)
+            {
+                Debug.Log($"🗑️ Cleaning up frozen projectile: {proj.name}");
+                Destroy(proj.gameObject);
+            }
         }
         
-        Debug.Log("✅ Refresh complete!");
+        Debug.Log("✅ Refresh complete - all systems reset!");
+    }
+    
+    // Helper to get current player transform
+    private Transform GetCurrentPlayerTransform()
+    {
+        TurnManager turnManager = FindFirstObjectByType<TurnManager>();
+        if (turnManager != null)
+        {
+            return turnManager.GetCurrentPlayer();
+        }
+        return null;
     }
 }

@@ -277,17 +277,20 @@ public class CameraHandler : MonoBehaviour
             
             if (targetIsProjectile)
             {
-                // Zero out X to center projectile; use Y and Z from player zoom
+                // Force projectile to center: zero out X completely, preserve Y/Z zoom
                 followOffset = new Vector3(0f, playerOffset.y, playerOffset.z);
+                
+                // Direct position update for projectile centering (no smooth damp to avoid drift)
+                Vector3 targetPosition = currentTarget.position + followOffset;
+                transform.position = targetPosition;
             }
             else
             {
-                // Use full player offset
+                // Use full player offset with smooth damping
                 followOffset = playerOffset;
+                Vector3 targetPosition = currentTarget.position + followOffset;
+                transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothSpeed);
             }
-            
-            Vector3 targetPosition = currentTarget.position + followOffset;
-            transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothSpeed);
             
             transform.rotation = Quaternion.Euler(0, 0, 0);
         }

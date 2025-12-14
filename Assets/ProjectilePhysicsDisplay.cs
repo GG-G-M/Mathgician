@@ -110,7 +110,7 @@ public class ProjectilePhysicsDisplay : MonoBehaviour
         // Quarter-flight labels
         for (int i = 0; i < 3; i++)
         {
-            quarterLabels[i] = new GameObject($"QuarterLabel_{(i+1)*25}%");
+            quarterLabels[i] = new GameObject($"FlightLabel_t{(i+1)*25}");
             quarterTexts[i] = quarterLabels[i].AddComponent<TextMesh>();
             ConfigureTextMesh(quarterTexts[i], new Color(1f, 1f, 1f));
             quarterTexts[i].text = "";
@@ -126,6 +126,9 @@ public class ProjectilePhysicsDisplay : MonoBehaviour
         textMesh.alignment = TextAlignment.Center;
         textMesh.characterSize = 0.1f; // Normal character size
         textMesh.fontStyle = FontStyle.Bold;
+        
+        // Set to UI layer (layer 5) to exclude from post-processing
+        textMesh.gameObject.layer = 5; // UI layer is typically not affected by post-processing
     }
 
     private void CreateVelocityArrow()
@@ -282,7 +285,11 @@ public class ProjectilePhysicsDisplay : MonoBehaviour
                 Vector3 v = rb.linearVelocity;
                 float angle = Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
                 float height = transform.position.y - startPosition.y;
-                quarterTexts[i].text = $"{(i+1)*25}%\nVx={v.x:F2} Vy={v.y:F2}\nAngle={angle:F1}°\nHeight={height:F2}m";
+                float timeAtPoint = quarterTimes[i];
+                
+                // Display time and physics data without percentage
+                quarterTexts[i].text = $"t={timeAtPoint:F2}s\nVx={v.x:F2} Vy={v.y:F2}\nAngle={angle:F1}°\nHeight={height:F2}m";
+                
                 // Place directly on the ideal trajectory point for that time
                 Vector3 p = PositionAtTime(quarterTimes[i]);
                 // Small visual offset upward to avoid z-fighting with the line
