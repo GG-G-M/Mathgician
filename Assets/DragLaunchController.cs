@@ -25,8 +25,11 @@ public class DragLaunchController : MonoBehaviour
     private Vector3 dragCurrentPos;
     private Camera mainCamera;
     private LineRenderer dragLine;
+    // Predicted visuals removed
     private VisualElement settingsPanel;
     private VisualElement formulaPanel;
+    private SettingsManager settingsManager;
+    private GameObject predictedImpactMarker;
     
     // UI field references
     private TextField angleField;
@@ -56,6 +59,10 @@ public class DragLaunchController : MonoBehaviour
         {
             cameraHandler = FindFirstObjectByType<CameraHandler>();
         }
+        if (settingsManager == null)
+        {
+            settingsManager = FindFirstObjectByType<SettingsManager>();
+        }
         
         // Create drag line
         GameObject dragLineObj = new GameObject("DragLine");
@@ -67,6 +74,8 @@ public class DragLaunchController : MonoBehaviour
         dragLine.startColor = dragLineColor;
         dragLine.endColor = dragLineColor;
         dragLine.positionCount = 0;
+        
+        // Predicted line removed per request
         
         // Setup trajectory line if assigned
         if (trajectoryLine != null)
@@ -104,6 +113,7 @@ public class DragLaunchController : MonoBehaviour
             dragLine.positionCount = 0;
         if (trajectoryLine != null)
             trajectoryLine.positionCount = 0;
+        // Predicted line removed per request
     }
     
     private void SetInputFieldsInteractable(bool interactable)
@@ -284,14 +294,10 @@ public class DragLaunchController : MonoBehaviour
                 // Trigger launch immediately (don't display in fields)
                 SendLaunchCommand(angle, velocity);
                 
-                // Reset fields after launch
-                SetInputFieldsInteractable(true);
+                // ★★★ FIXED: Don't re-enable fields - they should stay disabled in drag mode
+                // Fields will be re-enabled when control mode switches back to Input Based
             }
-            else
-            {
-                // Drag was too short, just reset
-                SetInputFieldsInteractable(true);
-            }
+            // No else needed - short drags just cancel, fields stay disabled
         }
     }
     
@@ -329,6 +335,8 @@ public class DragLaunchController : MonoBehaviour
         
         Vector3 velocity = dragVector * velocityMultiplier;
         Vector3[] points = new Vector3[trajectoryPoints];
+        bool predictedPlaced = false;
+        bool drawPredicted = false; // disabled per request
         
         for (int i = 0; i < trajectoryPoints; i++)
         {
@@ -340,12 +348,30 @@ public class DragLaunchController : MonoBehaviour
             {
                 trajectoryLine.positionCount = i + 1;
                 trajectoryLine.SetPositions(points);
+                // Place predicted impact marker and draw predicted line if toggle is ON
+                if (drawPredicted)
+                {
+                    Vector3 pPrev = i > 0 ? points[i - 1] : dragStartPos;
+                    Vector3 pCurr = points[i];
+                    // Linear interpolate to y=0
+                    float t = Mathf.InverseLerp(pPrev.y, pCurr.y, 0f);
+                    Vector3 impact = Vector3.Lerp(pPrev, pCurr, t);
+                    PlacePredictedImpactMarker(impact);
+                    predictedPlaced = true;
+                    // Predicted line disabled
+                }
                 return;
             }
         }
         
         trajectoryLine.positionCount = trajectoryPoints;
         trajectoryLine.SetPositions(points);
+        // If never went below ground or toggle off, clear predicted visuals
+        if (!predictedPlaced || !drawPredicted)
+        {
+            RemovePredictedImpactMarker();
+            // Predicted line disabled
+        }
     }
     
     private Vector3 CalculatePositionAtTime(Vector3 start, Vector3 velocity, float time)
@@ -353,6 +379,39 @@ public class DragLaunchController : MonoBehaviour
         // Projectile motion equation: p = p0 + v*t + 0.5*g*t^2
         Vector3 gravity = Physics.gravity;
         return start + velocity * time + 0.5f * gravity * time * time;
+    }
+
+    private void PlacePredictedImpactMarker(Vector3 position)
+    {
+        if (predictedImpactMarker == null)
+        {
+            predictedImpactMarker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            predictedImpactMarker.name = "PredictedImpactMarker";
+            predictedImpactMarker.transform.localScale = new Vector3(0.4f, 0.05f, 0.4f);
+            var renderer = predictedImpactMarker.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = new Color(0.2f, 1f, 0.6f, 0.9f);
+            }
+            // Disable collider to ensure no accidental projectile collisions
+            var markerCol = predictedImpactMarker.GetComponent<Collider>();
+            if (markerCol != null)
+            {
+                markerCol.enabled = false;
+            }
+        }
+        // Place on ground (y=0)
+        predictedImpactMarker.transform.position = new Vector3(position.x, 0f, position.z);
+        predictedImpactMarker.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        predictedImpactMarker.SetActive(true);
+    }
+
+    private void RemovePredictedImpactMarker()
+    {
+        if (predictedImpactMarker != null)
+        {
+            predictedImpactMarker.SetActive(false);
+        }
     }
     
     private void SendLaunchCommand(float angle, float velocity)

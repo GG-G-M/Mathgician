@@ -36,6 +36,14 @@
     <engine:Button text="🔄 Refresh" name="refreshButton" 
         style="position: absolute; top: 120px; left: 20px; 
             width: 120px; height: 40px; background-color: rgb(200, 150, 50);" />
+
+    <!-- Follow Mode Indicator (Top Left) -->
+    <engine:Label text="📷 Follow Mode ON" name="followModeIndicator"
+        style="position: absolute; top: 20px; left: 160px;
+            background-color: rgba(50, 50, 50, 0.6);
+            color: rgb(0, 255, 180);
+            padding-left: 8px; padding-right: 8px; padding-top: 4px; padding-bottom: 4px;
+            border-radius: 6px; display: none;" />
     
     <!-- Settings Panel - FULL SCREEN with centered content -->
     <engine:VisualElement name="settingsPanel" 

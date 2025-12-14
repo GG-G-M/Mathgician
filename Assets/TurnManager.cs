@@ -152,6 +152,14 @@ public class TurnManager : MonoBehaviour
                 return;
             }
         }
+        
+        // Return camera to the OTHER player (the one about to play next)
+        if (cameraHandler != null)
+        {
+            Transform otherPlayer = isPlayerATurn ? playerB : playerA;
+            cameraHandler.ReturnToPlayer(otherPlayer);
+            Debug.Log($"📷 Camera returning to {(isPlayerATurn ? "Player B" : "Player A")} after landing");
+        }
     }
     
     public void SwitchTurnsAfterLanding()
@@ -209,9 +217,9 @@ public class TurnManager : MonoBehaviour
         
         if (cameraHandler != null && playerA != null)
         {
-            cameraHandler.cameraTarget = playerA;
-            // ★★★ USE REMEMBERED OFFSET instead of startOffset
-            cameraHandler.transform.position = playerA.position + cameraHandler.GetCurrentOffset();
+            cameraHandler.SwitchToTargetPreserveZoom(playerA);
+            // Refresh follow state so next fire auto-follows if toggle is ON
+            cameraHandler.HardRefreshFollowState();
         }
         
         UpdateTurnUI();
@@ -237,9 +245,9 @@ public class TurnManager : MonoBehaviour
         
         if (cameraHandler != null && playerB != null)
         {
-            cameraHandler.cameraTarget = playerB;
-            // ★★★ USE REMEMBERED OFFSET instead of startOffset
-            cameraHandler.transform.position = playerB.position + cameraHandler.GetCurrentOffset();
+            cameraHandler.SwitchToTargetPreserveZoom(playerB);
+            // Refresh follow state so next fire auto-follows if toggle is ON
+            cameraHandler.HardRefreshFollowState();
         }
         
         UpdateTurnUI();

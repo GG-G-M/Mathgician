@@ -103,6 +103,8 @@ public class SettingsManager : MonoBehaviour
         {
             Debug.LogWarning("⚠️ 'controlModeDropdown' not found in settingsPanel!");
         }
+
+        // Predicted impact toggle removed per request
     }
     
     private void ToggleSettingsPanel()
@@ -153,6 +155,9 @@ public class SettingsManager : MonoBehaviour
     {
         return currentControlMode;
     }
+
+    // NEW: Setting for predicted impact marker
+    // Display setting removed; predicted impact visuals disabled
     
     // ★★★ NEW: Refresh everything
     private void RefreshEverything()
@@ -170,6 +175,11 @@ public class SettingsManager : MonoBehaviour
         {
             if (launcher != null)
             {
+                // Ensure camera handler reference is set
+                if (launcher.cameraHandler == null)
+                {
+                    launcher.cameraHandler = FindFirstObjectByType<CameraHandler>();
+                }
                 DragLaunchController dragController = launcher.GetComponent<DragLaunchController>();
                 if (dragController != null)
                 {
@@ -179,6 +189,14 @@ public class SettingsManager : MonoBehaviour
                     Debug.Log($"   🔄 Refreshed {launcher.gameObject.name} drag controller: {dragController.enabled}");
                 }
             }
+        }
+        
+        // Refresh camera follow state to stabilize behavior
+        CameraHandler cam = FindFirstObjectByType<CameraHandler>();
+        if (cam != null)
+        {
+            cam.HardRefreshFollowState();
+            Debug.Log("📷 Camera follow state refreshed");
         }
         
         Debug.Log("✅ Refresh complete!");

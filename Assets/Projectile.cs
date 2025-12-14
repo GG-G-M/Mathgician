@@ -91,6 +91,11 @@ public class Projectile : MonoBehaviour
         }
 
         FreezeProjectile();
+        // Notify physics display of landing to finalize timings/labels
+        if (physicsDisplay != null)
+        {
+            physicsDisplay.OnProjectileLanded();
+        }
         
         // Notify turn manager that projectile has landed
         if (turnManager != null)

@@ -17,7 +17,7 @@ public class DistanceDisplay : MonoBehaviour
     
     [Header("3D Text Settings")]
     public Font textFont; // Leave null to use default Arial
-    public int fontSize = 20;
+    public int fontSize = 40; // ★★★ INCREASED from 20
     public Color textColor = Color.white;
 
     // UI Elements (optional)
@@ -48,9 +48,9 @@ public class DistanceDisplay : MonoBehaviour
             projectileTrajectoryText = root.Q<Label>("projectileTrajectoryLabel");
         }
         
-        // Setup line renderers
-        SetupLineRenderer(straightLine, Color.cyan, 0.05f);
-        SetupLineRenderer(horizontalLine, Color.yellow, 0.03f);
+        // Setup line renderers with thicker lines
+        SetupLineRenderer(straightLine, Color.cyan, 0.15f); // ★★★ INCREASED from 0.05f
+        SetupLineRenderer(horizontalLine, Color.yellow, 0.10f); // ★★★ INCREASED from 0.03f
         
         // Create 3D text labels
         Create3DLabels();
@@ -76,20 +76,20 @@ public class DistanceDisplay : MonoBehaviour
     
     private void Create3DLabels()
     {
-        // Straight distance label
+        // Straight distance label - BRIGHT CYAN for high visibility
         straightDistanceLabel = new GameObject("StraightDistanceLabel");
         straightTextMesh = straightDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(straightTextMesh, Color.cyan);
+        ConfigureTextMesh(straightTextMesh, new Color(0f, 1f, 1f, 1f)); // Bright cyan
         
-        // Horizontal distance label
+        // Horizontal distance label - BRIGHT YELLOW for high visibility
         horizontalDistanceLabel = new GameObject("HorizontalDistanceLabel");
         horizontalTextMesh = horizontalDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(horizontalTextMesh, Color.yellow);
+        ConfigureTextMesh(horizontalTextMesh, new Color(1f, 1f, 0f, 1f)); // Bright yellow
         
-        // Vertical distance label
+        // Vertical distance label - BRIGHT GREEN for high visibility
         verticalDistanceLabel = new GameObject("VerticalDistanceLabel");
         verticalTextMesh = verticalDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(verticalTextMesh, Color.green);
+        ConfigureTextMesh(verticalTextMesh, new Color(0f, 1f, 0f, 1f)); // Bright green
         
         Debug.Log("✅ 3D distance labels created!");
     }
@@ -100,7 +100,7 @@ public class DistanceDisplay : MonoBehaviour
         textMesh.color = color;
         textMesh.anchor = TextAnchor.MiddleCenter;
         textMesh.alignment = TextAlignment.Center;
-        textMesh.characterSize = 0.1f;
+        textMesh.characterSize = 0.25f; // ★★★ INCREASED from 0.1f for better visibility
         
         if (textFont != null)
         {
@@ -190,7 +190,7 @@ public class DistanceDisplay : MonoBehaviour
             // Offset slightly above the line
             Vector3 labelPos = midpoint + Vector3.up * 0.5f;
             straightDistanceLabel.transform.position = labelPos;
-            straightTextMesh.text = $"{straightDistance:F2}m";
+            straightTextMesh.text = $"Distance: {straightDistance:F2}m";
             
             // Face the camera
             straightDistanceLabel.transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -209,12 +209,12 @@ public class DistanceDisplay : MonoBehaviour
             // Offset slightly below the line
             Vector3 labelPos = horizontalMidpoint + Vector3.down * 0.5f;
             horizontalDistanceLabel.transform.position = labelPos;
-            horizontalTextMesh.text = $"{horizontalDist:F2}m";
+            horizontalTextMesh.text = $"Distance: {horizontalDist:F2}m";
             
             horizontalDistanceLabel.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
         
-        // Vertical distance label - positioned beside vertical segment
+        // Vertical distance label - positioned beside vertical segment (shows HEIGHT)
         if (verticalTextMesh != null && playerA != null && playerB != null)
         {
             float verticalDist = Mathf.Abs(playerA.position.y - playerB.position.y);
@@ -227,7 +227,7 @@ public class DistanceDisplay : MonoBehaviour
             // Offset to the side of the vertical line
             Vector3 labelPos = verticalMidpoint + Vector3.left * 1f;
             verticalDistanceLabel.transform.position = labelPos;
-            verticalTextMesh.text = $"{verticalDist:F2}m";
+            verticalTextMesh.text = $"Height: {verticalDist:F2}m";
             
             verticalDistanceLabel.transform.rotation = Quaternion.Euler(0, 0, 0);
         }

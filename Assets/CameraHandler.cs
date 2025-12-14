@@ -20,6 +20,8 @@ public class CameraHandler : MonoBehaviour
     private Vector3 velocity = Vector3.zero;
     private Vector3 initialPosition;
     private Transform currentTarget;
+    private Transform lastPlayerTarget; // Remember which player to return to
+    private Label followModeIndicator;
     private bool followModeEnabled = false;
     private Toggle followProjectileToggle;
     
@@ -29,6 +31,7 @@ public class CameraHandler : MonoBehaviour
     private Vector3 dragStartPosition;
     
     private Vector3 currentOffset;
+    private Vector3 playerOffset; // Separate offset for players to preserve zoom
     
     private VisualElement settingsPanel;
     private VisualElement formulaPanel;
@@ -44,7 +47,9 @@ public class CameraHandler : MonoBehaviour
         }
 
         currentTarget = cameraTarget;
+        lastPlayerTarget = cameraTarget;
         currentOffset = startOffset;
+        playerOffset = startOffset; // Initialize player offset
         initialPosition = cameraTarget.position + currentOffset;
         transform.position = initialPosition;
 
@@ -66,17 +71,73 @@ public class CameraHandler : MonoBehaviour
         {
             var root = uiDocument.rootVisualElement;
             followProjectileToggle = root.Q<Toggle>("followProjectileToggle");
+            followModeIndicator = root.Q<Label>("followModeIndicator");
             
             if (followProjectileToggle != null)
             {
                 followProjectileToggle.label = "Follow Projectile";
-                followProjectileToggle.value = false;
+                // Preserve existing toggle value instead of forcing false
+                followModeEnabled = followProjectileToggle.value;
                 followProjectileToggle.RegisterValueChangedCallback(OnFollowToggleChanged);
+                UpdateFollowIndicator();
             }
             else
             {
                 Debug.LogWarning("followProjectileToggle not found in UI Document!");
             }
+        }
+    }
+
+    private void UpdateFollowIndicator()
+    {
+        if (followModeIndicator == null) return;
+        if (followModeEnabled)
+        {
+            followModeIndicator.text = "📷 Follow Mode ON";
+            followModeIndicator.style.display = DisplayStyle.Flex;
+        }
+        else
+        {
+            followModeIndicator.style.display = DisplayStyle.None;
+        }
+    }
+
+    // Public refresh to stabilize camera state after UI/setting refreshes
+    public void HardRefreshFollowState()
+    {
+        // Rebind UI toggle if needed
+        if (uiDocument != null && followProjectileToggle == null)
+        {
+            SetupUIToggle();
+        }
+        
+        // Sync mode from current toggle value
+        if (followProjectileToggle != null)
+        {
+            followModeEnabled = followProjectileToggle.value;
+        }
+
+        // Ensure we have a player target
+        if (lastPlayerTarget == null)
+        {
+            lastPlayerTarget = cameraTarget;
+        }
+
+        // Recompute player offset based on current position
+        if (lastPlayerTarget != null)
+        {
+            playerOffset = transform.position - lastPlayerTarget.position;
+        }
+
+        if (followModeEnabled)
+        {
+            // If follow is enabled, try to find current projectile
+            FindAndFollowExistingProjectile();
+        }
+        else
+        {
+            // Otherwise, return to player with preserved zoom
+            ReturnToPlayer(lastPlayerTarget);
         }
     }
 
@@ -91,7 +152,11 @@ public class CameraHandler : MonoBehaviour
             
             if (currentTarget != null)
             {
-                currentOffset = transform.position - currentTarget.position;
+                // Save player offset before potentially switching to projectile
+                if (currentTarget.GetComponent<Projectile>() == null)
+                {
+                    playerOffset = transform.position - currentTarget.position;
+                }
             }
             
             FindAndFollowExistingProjectile();
@@ -102,7 +167,7 @@ public class CameraHandler : MonoBehaviour
             
             if (currentTarget != null && currentTarget.GetComponent<Projectile>() != null)
             {
-                UpdateCurrentOffset();
+                playerOffset = transform.position - currentTarget.position;
                 
                 isInFreeMode = true;
                 freeModePosition = transform.position;
@@ -111,6 +176,7 @@ public class CameraHandler : MonoBehaviour
                 Debug.Log("🔒 Camera locked at current position");
             }
         }
+        UpdateFollowIndicator();
     }
 
     private void FindAndFollowExistingProjectile()
@@ -154,8 +220,13 @@ public class CameraHandler : MonoBehaviour
 
     public void NotifyProjectileFired(Transform projectileTransform)
     {
-        UpdateCurrentOffset();
+        // Remember current zoom before following projectile
+        if (currentTarget != null && currentTarget.GetComponent<Projectile>() == null)
+        {
+            playerOffset = currentOffset;
+        }
         
+        // Automatically follow if toggle is enabled
         if (followModeEnabled)
         {
             currentTarget = projectileTransform;
@@ -200,7 +271,22 @@ public class CameraHandler : MonoBehaviour
         }
         else if (currentTarget != null && !isDragging)
         {
-            Vector3 targetPosition = currentTarget.position + currentOffset;
+            // Use playerOffset for players, but center projectile horizontally while preserving zoom
+            bool targetIsProjectile = currentTarget.GetComponent<Projectile>() != null;
+            Vector3 followOffset;
+            
+            if (targetIsProjectile)
+            {
+                // Zero out X to center projectile; use Y and Z from player zoom
+                followOffset = new Vector3(0f, playerOffset.y, playerOffset.z);
+            }
+            else
+            {
+                // Use full player offset
+                followOffset = playerOffset;
+            }
+            
+            Vector3 targetPosition = currentTarget.position + followOffset;
             transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothSpeed);
             
             transform.rotation = Quaternion.Euler(0, 0, 0);
@@ -283,6 +369,12 @@ public class CameraHandler : MonoBehaviour
             Vector3 zoomDir = transform.forward * scroll * scrollSpeed;
             transform.position += zoomDir;
 
+            // Update playerOffset if currently following a player
+            if (currentTarget != null && currentTarget.GetComponent<Projectile>() == null)
+            {
+                playerOffset = transform.position - currentTarget.position;
+            }
+            // Also update currentOffset for backward compatibility
             if (currentTarget != null)
             {
                 currentOffset = transform.position - currentTarget.position;
@@ -346,6 +438,36 @@ public class CameraHandler : MonoBehaviour
     public Vector3 GetCurrentOffset()
     {
         return currentOffset;
+    }
+
+    // Preserve current zoom/offset when switching targets
+    public void SwitchToTargetPreserveZoom(Transform newTarget)
+    {
+        if (newTarget == null) return;
+        // Keep current camera position; update offset relative to the new target
+        currentTarget = newTarget;
+        cameraTarget = newTarget;
+        lastPlayerTarget = newTarget; // Remember player target
+        playerOffset = transform.position - newTarget.position;
+        currentOffset = playerOffset;
+        isInFreeMode = false;
+        Debug.Log($"📷 Switched target with preserved zoom. Offset: {playerOffset}");
+    }
+    
+    // Return camera to a specific player after projectile lands
+    public void ReturnToPlayer(Transform targetPlayer)
+    {
+        if (targetPlayer != null)
+        {
+            currentTarget = targetPlayer;
+            lastPlayerTarget = targetPlayer;
+            isInFreeMode = false;
+            followModeEnabled = false;
+            // Smoothly transition back with preserved zoom
+            Vector3 targetPos = targetPlayer.position + playerOffset;
+            velocity = Vector3.zero; // Reset velocity for smooth damp
+            Debug.Log($"📷 Returning to {targetPlayer.name} with preserved zoom");
+        }
     }
 
     public void ExitFreeMode()
