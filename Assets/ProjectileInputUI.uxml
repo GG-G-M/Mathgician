@@ -1,4 +1,6 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    
+    <!-- Input Fields (Bottom Center) - Lower Z-index -->
     <engine:GroupBox style="width: 360px; position: absolute; top: auto; left: 20%; bottom: 0; right: auto; flex-direction: column; flex-wrap: wrap; align-items: center;">
         <engine:TextField label="Angle (degrees)" placeholder-text="Yurrr" name="angleField" hide-placeholder-on-focus="false" style="height: 41px; flex-direction: row; align-items: center; align-self: stretch;" />
         <engine:TextField label="Velocity (m/s)" placeholder-text="Guurr" name="velocityField" style="align-self: stretch;" />
@@ -7,10 +9,86 @@
             <engine:Button text="FIRE!" name="fireButton" style="height: 37px; width: 134px; text-overflow: clip; white-space: nowrap; justify-content: flex-start; align-items: auto;" />
         </engine:GroupBox>
     </engine:GroupBox>
-    <engine:Label text="Straight Distance: 0.0m" name="straightDistanceLabel" />
-    <engine:Label text="Horizontal Path: 0.0m" name="horizontalDistanceLabel" />
-    <engine:Label text="Vertical Distance: 0.0m&#10;" name="verticalDistanceLabel" />
-    <engine:Label text="Proj Horizontal: 0.00m" name="projectileHorizontalLabel" />
-    <engine:Label text="Proj Trajectory: 0.00m" name="projectileTrajectoryLabel" focusable="true" />
+    
+    <!-- Distance Labels (Bottom Left) - Lower Z-index -->
+    <engine:GroupBox name="GroupBox" style="width: 171px; bottom: 0; right: 725px; position: absolute;">
+        <engine:Label text="Straight Distance: 0.0m" name="straightDistanceLabel" />
+        <engine:Label text="Horizontal Path: 0.0m" name="horizontalDistanceLabel" />
+        <engine:Label text="Vertical Distance: 0.0m&#10;" name="verticalDistanceLabel" />
+        <engine:Label text="Proj Horizontal: 0.00m" name="projectileHorizontalLabel" />
+        <engine:Label text="Proj Trajectory: 0.00m" name="projectileTrajectoryLabel" focusable="true" />
+    </engine:GroupBox>
+    
+    <!-- Game Mode Dropdown (Top Right) - Lower Z-index -->
     <engine:DropdownField label="Gamemode" name="gameModeDropdown" style="width: 420px; position: absolute; top: 4px; left: auto; right: 3px; align-self: auto; justify-content: space-evenly; flex-direction: row; align-content: auto; align-items: auto;" />
+    
+    <!-- Settings Button (Top Left) - Mid Z-index -->
+    <engine:Button text="⚙️ Settings" name="settingsButton" 
+        style="position: absolute; top: 20px; left: 20px; 
+            width: 120px; height: 40px;" />
+    
+    <!-- Formula Guide Button (Below Settings) - Mid Z-index -->
+    <engine:Button text="📐 Formulas" name="formulaGuideButton" 
+        style="position: absolute; top: 70px; left: 20px; 
+            width: 120px; height: 40px; background-color: rgb(50, 150, 200);" />
+    
+    <!-- Refresh Button (Below Formulas) - NEW! -->
+    <engine:Button text="🔄 Refresh" name="refreshButton" 
+        style="position: absolute; top: 120px; left: 20px; 
+            width: 120px; height: 40px; background-color: rgb(200, 150, 50);" />
+    
+    <!-- Settings Panel - FULL SCREEN with centered content -->
+    <engine:VisualElement name="settingsPanel" 
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center;
+            display: none;">
+        
+        <engine:VisualElement style="width: 600px; height: 400px;
+            background-color: rgba(20, 20, 20, 0.98); 
+            padding: 30px; border-radius: 15px; 
+            border-width: 3px; border-color: rgb(255, 200, 0);">
+            
+            <engine:Label text="⚙️ SETTINGS" 
+                style="font-size: 28px; -unity-text-align: middle-center; 
+                    color: rgb(255, 200, 0); margin-bottom: 30px;
+                    -unity-font-style: bold;" />
+            
+            <engine:DropdownField label="Control Mode" name="controlModeDropdown" 
+                style="margin-bottom: 20px; font-size: 16px;" />
+            
+            <engine:Button text="Close" name="closeSettingsButton" 
+                style="margin-top: 40px; height: 50px; font-size: 18px;
+                    background-color: rgb(200, 50, 50);" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+    
+    <!-- Formula Guide Panel - FULL SCREEN -->
+    <engine:VisualElement name="formulaPanel" 
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center;
+            display: none;">
+        
+        <engine:VisualElement style="width: 800px; height: 700px;
+            background-color: rgba(10, 20, 40, 0.98); 
+            padding: 30px; border-radius: 15px; 
+            border-width: 3px; border-color: rgb(0, 255, 255);">
+            
+            <engine:Label text="📐 PROJECTILE MOTION FORMULA GUIDE" 
+                style="font-size: 26px; -unity-text-align: middle-center; 
+                    color: cyan; margin-bottom: 20px; 
+                    -unity-font-style: bold;" />
+            
+            <engine:ScrollView name="formulaScrollView" 
+                style="flex-grow: 1; margin-bottom: 20px;" />
+            
+            <engine:Button text="Close" name="closeFormulaButton" 
+                style="height: 50px; background-color: rgb(200, 50, 50);
+                    font-size: 18px;" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+    
 </engine:UXML>

@@ -22,6 +22,9 @@ public class TurnManager : MonoBehaviour
     [Header("Game Mode Manager")]
     public GameModeManager gameModeManager;
     
+    [Header("Settings Manager")]
+    public SettingsManager settingsManager;
+    
     [Header("Turn Settings")]
     public float fireCooldown = 2f;
     
@@ -31,7 +34,6 @@ public class TurnManager : MonoBehaviour
     
     private Button fireButton;
     private Label turnIndicatorLabel;
-    private Label cooldownLabel;
     
     private bool gameOver = false;
 
@@ -58,18 +60,12 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("⚠️ fireButton not found in UI!");
         }
         
-        // Query for existing UI labels (optional - won't create if not found)
+        // Query for optional turn indicator label
         turnIndicatorLabel = root.Q<Label>("turnIndicator");
-        cooldownLabel = root.Q<Label>("cooldownLabel");
         
         if (turnIndicatorLabel == null)
         {
             Debug.Log("ℹ️ turnIndicator label not found in UI - using console logs only");
-        }
-        
-        if (cooldownLabel == null)
-        {
-            Debug.Log("ℹ️ cooldownLabel not found in UI - using console logs only");
         }
         
         UpdateTurnUI();
@@ -173,11 +169,6 @@ public class TurnManager : MonoBehaviour
         canFire = true;
         cooldownTimer = 0f;
         
-        if (cooldownLabel != null)
-        {
-            cooldownLabel.style.display = DisplayStyle.None;
-        }
-        
         if (fireButton != null)
         {
             fireButton.SetEnabled(true);
@@ -203,36 +194,98 @@ public class TurnManager : MonoBehaviour
     
     private void SwitchToPlayerA()
     {
+        Debug.Log("🔵 Switching to Player A's turn...");
+        
         if (playerALauncher != null)
+        {
             playerALauncher.enabled = true;
+            Debug.Log("   ✅ Player A launcher ENABLED");
+        }
         if (playerBLauncher != null)
+        {
             playerBLauncher.enabled = false;
+            Debug.Log("   ❌ Player B launcher DISABLED");
+        }
         
         if (cameraHandler != null && playerA != null)
         {
             cameraHandler.cameraTarget = playerA;
-            cameraHandler.transform.position = playerA.position + cameraHandler.startOffset;
+            // ★★★ USE REMEMBERED OFFSET instead of startOffset
+            cameraHandler.transform.position = playerA.position + cameraHandler.GetCurrentOffset();
         }
         
         UpdateTurnUI();
-        Debug.Log("🔵 Player A's Turn");
+        
+        // ★★★ CRITICAL FIX: Re-apply control mode after turn switch
+        Invoke(nameof(RefreshControlModeAfterSwitch), 0.2f);
     }
     
     private void SwitchToPlayerB()
     {
+        Debug.Log("🔴 Switching to Player B's turn...");
+        
         if (playerBLauncher != null)
+        {
             playerBLauncher.enabled = true;
+            Debug.Log("   ✅ Player B launcher ENABLED");
+        }
         if (playerALauncher != null)
+        {
             playerALauncher.enabled = false;
+            Debug.Log("   ❌ Player A launcher DISABLED");
+        }
         
         if (cameraHandler != null && playerB != null)
         {
             cameraHandler.cameraTarget = playerB;
-            cameraHandler.transform.position = playerB.position + cameraHandler.startOffset;
+            // ★★★ USE REMEMBERED OFFSET instead of startOffset
+            cameraHandler.transform.position = playerB.position + cameraHandler.GetCurrentOffset();
         }
         
         UpdateTurnUI();
-        Debug.Log("🔴 Player B's Turn");
+        
+        // ★★★ CRITICAL FIX: Re-apply control mode after turn switch
+        Invoke(nameof(RefreshControlModeAfterSwitch), 0.2f);
+    }
+    
+    // ★★★ NEW: Force refresh control mode after turn switches
+    private void RefreshControlModeAfterSwitch()
+    {
+        if (gameModeManager != null)
+        {
+            gameModeManager.ApplyGameMode();
+        }
+        
+        // Force refresh the current player's launcher
+        PlayerLauncher currentLauncher = isPlayerATurn ? playerALauncher : playerBLauncher;
+        if (currentLauncher != null)
+        {
+            // Use assigned settings manager or find it
+            if (settingsManager == null)
+            {
+                settingsManager = FindFirstObjectByType<SettingsManager>();
+            }
+            
+            if (settingsManager != null)
+            {
+                currentLauncher.SetControlMode(settingsManager.GetControlMode());
+                
+                // ★★★ ADDED: Force toggle the drag controller like Refresh button does
+                DragLaunchController dragController = currentLauncher.GetComponent<DragLaunchController>();
+                if (dragController != null)
+                {
+                    dragController.enabled = false;
+                    dragController.enabled = (settingsManager.GetControlMode() == SettingsManager.ControlMode.DragAndLaunch);
+                    Debug.Log($"🔄 Forced drag controller refresh: {dragController.enabled}");
+                }
+                
+                Debug.Log($"🔄 Forced control mode refresh: {settingsManager.GetControlMode()}");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ SettingsManager not found!");
+            }
+        }
     }
     
     private void UpdateTurnUI()
@@ -268,11 +321,6 @@ public class TurnManager : MonoBehaviour
             turnIndicatorLabel.text = $"🎉 {winner} WINS! 🎉";
             turnIndicatorLabel.style.color = Color.green;
             turnIndicatorLabel.style.fontSize = 32;
-        }
-        
-        if (cooldownLabel != null)
-        {
-            cooldownLabel.style.display = DisplayStyle.None;
         }
     }
     

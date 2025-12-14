@@ -28,8 +28,12 @@ public class CameraHandler : MonoBehaviour
     private bool isDragging = false;
     private Vector3 dragStartPosition;
     
-    // ★★★ NEW: Remember current zoom offset ★★★
     private Vector3 currentOffset;
+    
+    private VisualElement settingsPanel;
+    private VisualElement formulaPanel;
+    
+    private PlayerLauncher[] playerLaunchers;
 
     private void Start()
     {
@@ -40,11 +44,20 @@ public class CameraHandler : MonoBehaviour
         }
 
         currentTarget = cameraTarget;
-        currentOffset = startOffset; // Initialize with default offset
+        currentOffset = startOffset;
         initialPosition = cameraTarget.position + currentOffset;
         transform.position = initialPosition;
 
         SetupUIToggle();
+        
+        if (uiDocument != null)
+        {
+            var root = uiDocument.rootVisualElement;
+            settingsPanel = root.Q<VisualElement>("settingsPanel");
+            formulaPanel = root.Q<VisualElement>("formulaPanel");
+        }
+        
+        playerLaunchers = FindObjectsByType<PlayerLauncher>(FindObjectsSortMode.None);
     }
 
     private void SetupUIToggle()
@@ -76,26 +89,21 @@ public class CameraHandler : MonoBehaviour
             Debug.Log("✅ Follow mode ENABLED");
             isInFreeMode = false;
             
-            // ★★★ UPDATE: Calculate current offset before following ★★★
             if (currentTarget != null)
             {
                 currentOffset = transform.position - currentTarget.position;
             }
             
-            // Try to find and follow an existing projectile immediately
             FindAndFollowExistingProjectile();
         }
         else
         {
             Debug.Log("❌ Follow mode DISABLED");
             
-            // If we were following a projectile, STAY at current position
             if (currentTarget != null && currentTarget.GetComponent<Projectile>() != null)
             {
-                // ★★★ UPDATE: Save current offset before entering free mode ★★★
                 UpdateCurrentOffset();
                 
-                // Enter free mode and lock current camera position
                 isInFreeMode = true;
                 freeModePosition = transform.position;
                 currentTarget = null;
@@ -105,14 +113,12 @@ public class CameraHandler : MonoBehaviour
         }
     }
 
-    // Find and follow any existing projectile in the scene
     private void FindAndFollowExistingProjectile()
     {
         Projectile[] projectiles = FindObjectsByType<Projectile>(FindObjectsSortMode.None);
         
         if (projectiles.Length > 0)
         {
-            // Find the newest active projectile
             Projectile newestProjectile = null;
             int highestInstanceID = int.MinValue;
             
@@ -146,13 +152,10 @@ public class CameraHandler : MonoBehaviour
         }
     }
 
-    // ☆☆☆ PUBLIC METHOD - Called by PlayerLauncher when firing ☆☆☆
     public void NotifyProjectileFired(Transform projectileTransform)
     {
-        // ★★★ UPDATE: Save current offset before switching targets ★★★
         UpdateCurrentOffset();
         
-        // Only follow if toggle is enabled
         if (followModeEnabled)
         {
             currentTarget = projectileTransform;
@@ -171,21 +174,18 @@ public class CameraHandler : MonoBehaviour
         HandleScroll();
         HandleReset();
         
-        // Check if current projectile is still valid (only when following)
         if (followModeEnabled && currentTarget != null && currentTarget.GetComponent<Projectile>() != null)
         {
             if (!IsValidProjectile(currentTarget))
             {
                 Debug.Log("Projectile stopped/destroyed - entering free roam mode");
                 
-                // ★★★ UPDATE: Save offset before losing target ★★★
                 UpdateCurrentOffset();
                 
                 currentTarget = null;
                 isInFreeMode = true;
                 freeModePosition = transform.position;
                 
-                // Lock rotation when entering free mode
                 transform.rotation = Quaternion.Euler(0, 0, 0);
             }
         }
@@ -195,30 +195,43 @@ public class CameraHandler : MonoBehaviour
     {
         if (isInFreeMode)
         {
-            // Stay locked at current position with fixed rotation
-            transform.rotation = Quaternion.Euler(0, 0, 0); // Keep camera straight
+            transform.rotation = Quaternion.Euler(0, 0, 0);
             return;
         }
         else if (currentTarget != null && !isDragging)
         {
-            // ★★★ UPDATE: Follow with remembered offset instead of startOffset ★★★
             Vector3 targetPosition = currentTarget.position + currentOffset;
             transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, smoothSpeed);
             
-            // For side-scroller: keep camera rotation fixed, don't look at target
             transform.rotation = Quaternion.Euler(0, 0, 0);
         }
         else if (currentTarget == null && !isDragging && !followModeEnabled)
         {
-            // Default back to Player only if follow mode is off
             currentTarget = cameraTarget;
         }
     }
 
     private void HandleDrag()
     {
+        if (IsAnyPanelOpen())
+        {
+            if (isDragging)
+            {
+                isDragging = false;
+            }
+            return;
+        }
+        
         if (Input.GetMouseButtonDown(0))
         {
+            // ★★★ PRIORITY CHECK: Let drag-launch controller have first priority
+            if (IsDragLaunchModeActive() && IsMouseOverPlayer())
+            {
+                Debug.Log("🎯 Yielding to DragLaunchController - camera drag disabled");
+                isDragging = false; // Ensure camera doesn't grab control
+                return; // Let the player's drag controller handle it
+            }
+            
             if (!IsClickingOnToggle())
             {
                 dragStartPosition = Input.mousePosition;
@@ -226,22 +239,27 @@ public class CameraHandler : MonoBehaviour
                 isInFreeMode = true;
                 freeModePosition = transform.position;
                 
-                // ★★★ UPDATE: Save offset before losing target ★★★
                 UpdateCurrentOffset();
                 currentTarget = null;
                 
-                // Lock rotation when entering free mode
                 transform.rotation = Quaternion.Euler(0, 0, 0);
-                Debug.Log("🔒 Entered free roam mode (dragging)");
+                Debug.Log("🔒 Started camera drag");
             }
         }
 
         if (Input.GetMouseButton(0) && isDragging)
         {
+            // ★★★ Stop camera drag if mouse moves over player during drag
+            if (IsDragLaunchModeActive() && IsMouseOverPlayer())
+            {
+                isDragging = false;
+                Debug.Log("🛑 Camera drag cancelled - moved over player");
+                return;
+            }
+            
             Vector3 currentPos = Input.mousePosition;
             Vector3 difference = Camera.main.ScreenToViewportPoint(dragStartPosition - currentPos);
             
-            // Move in X (horizontal) and Y (vertical) only - NOT Z!
             Vector3 move = new Vector3(difference.x * dragSpeed, difference.y * dragSpeed, 0);
             transform.Translate(move, Space.World);
             
@@ -257,13 +275,14 @@ public class CameraHandler : MonoBehaviour
 
     private void HandleScroll()
     {
+        if (IsAnyPanelOpen()) return;
+        
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) > 0.01f)
         {
             Vector3 zoomDir = transform.forward * scroll * scrollSpeed;
             transform.position += zoomDir;
 
-            // ★★★ UPDATE: Update currentOffset when zooming ★★★
             if (currentTarget != null)
             {
                 currentOffset = transform.position - currentTarget.position;
@@ -279,7 +298,6 @@ public class CameraHandler : MonoBehaviour
                 transform.position = new Vector3(transform.position.x, maxZoom, transform.position.z);
             }
             
-            // Enter free mode when scrolling - allows zooming while following Player
             if (!isInFreeMode)
             {
                 isInFreeMode = true;
@@ -309,23 +327,33 @@ public class CameraHandler : MonoBehaviour
         currentTarget = cameraTarget;
         isInFreeMode = false;
         followModeEnabled = false;
-        
-        // ★★★ UPDATE: Use current offset instead of resetting to startOffset ★★★
         transform.position = cameraTarget.position + currentOffset;
         
-        // Keep camera rotation fixed for side-scroller
         transform.rotation = Quaternion.Euler(0, 0, 0);
         
         Debug.Log("🏠 Camera returned to Player");
     }
     
-    // ★★★ NEW METHOD: Update the current offset based on camera position ★★★
     private void UpdateCurrentOffset()
     {
         if (currentTarget != null)
         {
             currentOffset = transform.position - currentTarget.position;
             Debug.Log($"📏 Offset updated: {currentOffset}");
+        }
+    }
+
+    public Vector3 GetCurrentOffset()
+    {
+        return currentOffset;
+    }
+
+    public void ExitFreeMode()
+    {
+        if (isInFreeMode)
+        {
+            isInFreeMode = false;
+            Debug.Log("📷 Exited free mode for drag-launch");
         }
     }
 
@@ -336,7 +364,6 @@ public class CameraHandler : MonoBehaviour
         Projectile projectile = potentialTarget.GetComponent<Projectile>();
         if (projectile == null) return false;
         
-        // Check if projectile is frozen (hit something)
         Rigidbody rb = potentialTarget.GetComponent<Rigidbody>();
         if (rb != null && rb.isKinematic)
         {
@@ -354,5 +381,59 @@ public class CameraHandler : MonoBehaviour
         Vector2 mousePosition = Input.mousePosition;
         var pickedElement = root.panel.Pick(mousePosition);
         return pickedElement != null && (pickedElement == followProjectileToggle || followProjectileToggle.Contains(pickedElement));
+    }
+    
+    private bool IsAnyPanelOpen()
+    {
+        bool settingsOpen = settingsPanel != null && settingsPanel.style.display == DisplayStyle.Flex;
+        bool formulaOpen = formulaPanel != null && formulaPanel.style.display == DisplayStyle.Flex;
+        return settingsOpen || formulaOpen;
+    }
+    
+    private bool IsDragLaunchModeActive()
+    {
+        if (playerLaunchers == null) return false;
+        
+        foreach (var launcher in playerLaunchers)
+        {
+            if (launcher != null && launcher.enabled)
+            {
+                DragLaunchController dragController = launcher.GetComponent<DragLaunchController>();
+                if (dragController != null && dragController.enabled)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    private bool IsMouseOverPlayer()
+    {
+        if (Camera.main == null) return false;
+        
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+        
+        if (Physics.Raycast(ray, out hit, 1000f))
+        {
+            PlayerLauncher launcher = hit.collider.GetComponent<PlayerLauncher>();
+            if (launcher == null)
+            {
+                launcher = hit.collider.GetComponentInParent<PlayerLauncher>();
+            }
+            
+            if (launcher != null)
+            {
+                DragLaunchController dragController = launcher.GetComponent<DragLaunchController>();
+                if (dragController != null && dragController.enabled)
+                {
+                    Debug.Log($"🎯 Raycast hit player with drag-launch: {hit.collider.gameObject.name}");
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 }

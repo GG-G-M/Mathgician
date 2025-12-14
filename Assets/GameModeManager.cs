@@ -17,6 +17,9 @@ public class GameModeManager : MonoBehaviour
     [Header("Settings")]
     public GameMode currentGameMode = GameMode.FullCalculation;
     
+    [Header("Settings Manager")]
+    public SettingsManager settingsManager;
+    
     [Header("Randomization Ranges")]
     public float minAngle = 30f;
     public float maxAngle = 60f;
@@ -38,7 +41,40 @@ public class GameModeManager : MonoBehaviour
     private void Start()
     {
         SetupUI();
+        
+        // Auto-find settings manager if not assigned
+        if (settingsManager == null)
+        {
+            settingsManager = FindFirstObjectByType<SettingsManager>();
+        }
+        
         ApplyGameMode();
+        UpdateGameModeVisibility();
+    }
+    
+    private void Update()
+    {
+        // Check control mode every frame and update visibility
+        UpdateGameModeVisibility();
+    }
+    
+    private void UpdateGameModeVisibility()
+    {
+        if (settingsManager == null || gameModeDropdown == null) return;
+        
+        // Show gamemode dropdown ONLY in Input Based mode
+        bool isInputMode = settingsManager.GetControlMode() == SettingsManager.ControlMode.InputBased;
+        gameModeDropdown.style.display = isInputMode ? DisplayStyle.Flex : DisplayStyle.None;
+        
+        if (!isInputMode)
+        {
+            // Reset to full calculation when switching away from input mode
+            currentGameMode = GameMode.FullCalculation;
+            if (gameModeDropdown.index != 0)
+            {
+                gameModeDropdown.index = 0;
+            }
+        }
     }
     
     private void SetupUI()

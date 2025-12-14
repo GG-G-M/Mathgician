@@ -16,6 +16,9 @@ public class Projectile : MonoBehaviour
     // Distance display reference
     private DistanceDisplay distanceDisplay;
     
+    // Physics display reference
+    private ProjectilePhysicsDisplay physicsDisplay;
+    
     // Turn manager reference
     private TurnManager turnManager;
 
@@ -35,6 +38,14 @@ public class Projectile : MonoBehaviour
         if (distanceDisplay == null)
         {
             Debug.LogWarning("DistanceDisplay not found in scene!");
+        }
+        
+        // Get or add physics display component
+        physicsDisplay = GetComponent<ProjectilePhysicsDisplay>();
+        if (physicsDisplay == null)
+        {
+            physicsDisplay = gameObject.AddComponent<ProjectilePhysicsDisplay>();
+            Debug.Log("✅ ProjectilePhysicsDisplay added automatically!");
         }
     }
     
@@ -139,16 +150,21 @@ public class Projectile : MonoBehaviour
     {
         isFrozen = true;
 
-        // Stop physics
+        // Stop physics completely
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
+        
+        // ★★★ NEW: Freeze all constraints to prevent any movement ★★★
+        rb.constraints = RigidbodyConstraints.FreezeAll;
 
         // Disable collisions
         col.enabled = false;
 
         // Make semi-transparent
         SetTransparency(0.3f);
+        
+        Debug.Log("⏸️ Projectile frozen at position: " + transform.position);
     }
 
     private void SetTransparency(float alpha)

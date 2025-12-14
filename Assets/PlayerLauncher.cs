@@ -24,6 +24,10 @@ public class PlayerLauncher : MonoBehaviour
     
     [Header("Player Settings")]
     public bool isFacingLeft = false; // Set TRUE for Player B, FALSE for Player A
+    
+    // Control mode
+    private SettingsManager.ControlMode controlMode = SettingsManager.ControlMode.InputBased;
+    private DragLaunchController dragController;
 
     private TextField angleField;
     private TextField velocityField;
@@ -86,6 +90,15 @@ public class PlayerLauncher : MonoBehaviour
                 Debug.LogWarning("GameModeManager not found! Using manual input only.");
             }
         }
+        
+        // Get or add drag controller
+        dragController = GetComponent<DragLaunchController>();
+        if (dragController == null)
+        {
+            dragController = gameObject.AddComponent<DragLaunchController>();
+            Debug.Log("DragLaunchController added!");
+        }
+        dragController.enabled = false; // Start with input-based mode
     }
 
     private void FireProjectile()
@@ -211,6 +224,156 @@ public class PlayerLauncher : MonoBehaviour
         if (turnManager != null)
         {
             turnManager.OnProjectileFired();
+        }
+    }
+    
+    // ★★★ NEW: Public method for drag controller to call ★★★
+    public void LaunchWithParameters(float angle, float velocity)
+    {
+        // Reuse the same firing logic but with provided parameters
+        if (!enabled)
+        {
+            Debug.LogWarning("This launcher is disabled - not this player's turn!");
+            return;
+        }
+        
+        if (turnManager != null && !turnManager.CanCurrentPlayerFire())
+        {
+            Debug.LogWarning("Cannot fire - not your turn or on cooldown!");
+            return;
+        }
+        
+        Debug.Log($"🔥 {gameObject.name} is firing with drag parameters!");
+        
+        // Clean up previous projectile and trail
+        if (currentProjectile != null)
+            Destroy(currentProjectile);
+        if (currentTrail != null)
+            Destroy(currentTrail);
+
+        // Spawn projectile
+        currentProjectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
+        
+        Rigidbody rb = currentProjectile.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            Debug.LogError("Projectile prefab missing Rigidbody!");
+            return;
+        }
+
+        // Flip angle for Player B (facing left)
+        float actualAngle = angle;
+        if (isFacingLeft)
+        {
+            actualAngle = 180f - angle;
+            Debug.Log($"🔄 Player B angle flipped: {angle}° → {actualAngle}°");
+        }
+
+        float rad = actualAngle * Mathf.Deg2Rad;
+        Vector3 direction = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0);
+        rb.linearVelocity = direction * velocity;
+        
+        Debug.Log($"🚀 Firing at angle: {actualAngle}°, velocity: {velocity} m/s");
+
+        // Prevent collision with player
+        Collider playerCol = GetComponent<Collider>();
+        Collider projCol = currentProjectile.GetComponent<Collider>();
+        if (playerCol != null && projCol != null)
+            Physics.IgnoreCollision(playerCol, projCol);
+
+        // Spawn and setup trail
+        if (trailPrefab != null)
+        {
+            currentTrail = Instantiate(trailPrefab, currentProjectile.transform.position, Quaternion.identity);
+            
+            ProjectileTrailFollower follower = currentTrail.GetComponent<ProjectileTrailFollower>();
+            if (follower == null)
+            {
+                follower = currentTrail.AddComponent<ProjectileTrailFollower>();
+            }
+            
+            follower.target = currentProjectile.transform;
+        }
+        
+        // Set the projectile's owner
+        Projectile projectileScript = currentProjectile.GetComponent<Projectile>();
+        if (projectileScript != null && turnManager != null)
+        {
+            projectileScript.SetTurnManager(turnManager);
+        }
+        
+        // Tell camera to follow
+        if (cameraHandler != null)
+        {
+            cameraHandler.NotifyProjectileFired(currentProjectile.transform);
+        }
+        
+        // Notify turn manager
+        if (turnManager != null)
+        {
+            turnManager.OnProjectileFired();
+        }
+    }
+    
+    // ★★★ NEW: Called by SettingsManager to change control mode ★★★
+    public void SetControlMode(SettingsManager.ControlMode mode)
+    {
+        controlMode = mode;
+        
+        Debug.Log($"🎮 SetControlMode called on {gameObject.name}: {mode}, Launcher enabled: {enabled}");
+        
+        // Apply control mode immediately if this launcher is active
+        ApplyControlModeImmediately();
+    }
+    
+    // ★★★ NEW: Helper to apply control mode immediately ★★★
+    private void ApplyControlModeImmediately()
+    {
+        if (!enabled) 
+        {
+            return; // Don't apply if this launcher isn't active
+        }
+        
+        if (dragController != null)
+        {
+            bool shouldEnableDrag = (controlMode == SettingsManager.ControlMode.DragAndLaunch);
+            dragController.enabled = shouldEnableDrag;
+            
+            Debug.Log($"   → Drag controller for {gameObject.name}: {(shouldEnableDrag ? "ENABLED ✅" : "DISABLED ❌")}");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ {gameObject.name} has no drag controller!");
+        }
+    }
+    
+    // ★★★ NEW: Called when this launcher is enabled (player's turn starts) ★★★
+    private void OnEnable()
+    {
+        Debug.Log($"🟢 PlayerLauncher OnEnable: {gameObject.name}");
+        
+        // ★★★ CRITICAL FIX: Get the CURRENT control mode from SettingsManager
+        SettingsManager settingsManager = FindFirstObjectByType<SettingsManager>();
+        if (settingsManager != null)
+        {
+            controlMode = settingsManager.GetControlMode();
+            Debug.Log($"   Synced control mode from SettingsManager: {controlMode}");
+        }
+        
+        // Now apply the correct control mode
+        ApplyControlModeImmediately();
+    }
+    
+    // ★★★ NEW: Called when this launcher is disabled (player's turn ends) ★★★
+    private void OnDisable()
+    {
+        Debug.Log($"🔴 PlayerLauncher OnDisable: {gameObject.name}");
+        
+        // Disable drag controller when not player's turn
+        if (dragController != null)
+        {
+            dragController.enabled = false;
+            Debug.Log($"   ❌ {gameObject.name} drag controller DISABLED");
         }
     }
 }
