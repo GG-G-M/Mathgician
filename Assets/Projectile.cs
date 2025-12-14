@@ -2,9 +2,20 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    [Header("Visual Effects")]
+    [Tooltip("Effect when projectile hits ground")]
+    public GameObject groundImpactEffectPrefab;
+    [Tooltip("Lifetime of ground impact effect (seconds)")]
+    public float groundImpactEffectDuration = 1f;
+    [Tooltip("Effect when projectile hits player")]
+    public GameObject playerHitEffectPrefab;
+    [Tooltip("Lifetime of player hit effect (seconds)")]
+    public float playerHitEffectDuration = 1f;
+    
     private Rigidbody rb;
     private Collider col;
     private bool isFrozen = false;
+    private bool hasCollided = false; // Prevent duplicate collision handling
     private Vector3 startPosition;
     private float spawnProtectionTime = 0.1f;
     private float spawnTimer = 0f;
@@ -29,8 +40,9 @@ public class Projectile : MonoBehaviour
         startPosition = transform.position;
         lastPosition = startPosition;
         
-        // Better collision detection
+        // Better collision detection for high-speed projectiles
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.useGravity = true;
         
         // Get distance display reference
         distanceDisplay = FindFirstObjectByType<DistanceDisplay>();
@@ -76,6 +88,9 @@ public class Projectile : MonoBehaviour
         // Ignore collisions during grace period
         if (spawnTimer < spawnProtectionTime) return;
         if (isFrozen) return;
+        if (hasCollided) return; // Prevent duplicate collision handling
+        
+        hasCollided = true; // Mark as collided immediately
 
         // Final distance calculation
         CalculateFinalDistances();
@@ -84,10 +99,28 @@ public class Projectile : MonoBehaviour
         PlayerHandler playerHandler = collision.gameObject.GetComponent<PlayerHandler>();
         bool hitPlayer = playerHandler != null;
         
+        // Spawn appropriate visual effect
+        Vector3 impactPosition = collision.contacts.Length > 0 ? collision.contacts[0].point : transform.position;
         if (hitPlayer)
         {
+            // Spawn player hit explosion effect
+            if (playerHitEffectPrefab != null)
+            {
+                GameObject hitEffect = Instantiate(playerHitEffectPrefab, impactPosition, Quaternion.identity);
+                Destroy(hitEffect, playerHitEffectDuration);
+            }
+            
             playerHandler.Die();
             Debug.Log($"HIT! {collision.gameObject.name} has been defeated!");
+        }
+        else
+        {
+            // Spawn ground impact AOE effect
+            if (groundImpactEffectPrefab != null)
+            {
+                GameObject groundEffect = Instantiate(groundImpactEffectPrefab, impactPosition, Quaternion.identity);
+                Destroy(groundEffect, groundImpactEffectDuration);
+            }
         }
 
         FreezeProjectile();
@@ -103,10 +136,22 @@ public class Projectile : MonoBehaviour
             turnManager.OnProjectileFinished(hitPlayer, collision.gameObject);
         }
         
-        // ★★★ Always switch turns after landing (with delay for animation) ★★★
-        // Use longer delay if hit player (for death animation), shorter for miss
-        float switchDelay = hitPlayer ? 2f : 1.5f;
-        Invoke(nameof(TriggerTurnSwitch), switchDelay);
+        // Always switch turns after ground hit (camera behavior controlled by autoSwitchPerspective)
+        if (!hitPlayer)
+        {
+            Invoke(nameof(TriggerTurnSwitch), 1.5f);
+        }
+    }
+    
+    // Fallback for high-speed collisions that might be missed
+    private void OnCollisionStay(Collision collision)
+    {
+        // If we're somehow in collision but haven't handled it yet, treat it as a collision
+        if (!hasCollided && !isFrozen && spawnTimer >= spawnProtectionTime)
+        {
+            Debug.LogWarning("Collision caught by OnCollisionStay fallback - handling now");
+            OnCollisionEnter(collision);
+        }
     }
     
     private void TriggerTurnSwitch()

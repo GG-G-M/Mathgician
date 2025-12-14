@@ -151,6 +151,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9503b88a52f50a54ba8de3e4b35e9ff5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  groundImpactEffectPrefab: {fileID: 4994997792314849709, guid: 3dd50886582244645be87adb42aa8528, type: 3}
+  playerHitEffectPrefab: {fileID: 358637981425055526, guid: 8eb503696b886e04faff8fc0f480d473, type: 3}
 --- !u!1001 &6086463574488626154
 PrefabInstance:
   m_ObjectHideFlags: 0

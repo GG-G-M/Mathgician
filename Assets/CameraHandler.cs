@@ -462,7 +462,6 @@ public class CameraHandler : MonoBehaviour
             currentTarget = targetPlayer;
             lastPlayerTarget = targetPlayer;
             isInFreeMode = false;
-            followModeEnabled = false;
             // Smoothly transition back with preserved zoom
             Vector3 targetPos = targetPlayer.position + playerOffset;
             velocity = Vector3.zero; // Reset velocity for smooth damp

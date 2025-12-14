@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -27,6 +28,8 @@ public class TurnManager : MonoBehaviour
     
     [Header("Turn Settings")]
     public float fireCooldown = 2f;
+    [Tooltip("Automatically switch camera to next player after projectile lands")]
+    public bool autoSwitchPerspective = true;
     
     private bool isPlayerATurn = true;
     private bool canFire = true;
@@ -34,6 +37,11 @@ public class TurnManager : MonoBehaviour
     
     private Button fireButton;
     private Label turnIndicatorLabel;
+    
+    // Game Over UI
+    private VisualElement gameOverPanel;
+    private Label winnerLabel;
+    private Button resetGameButton;
     
     private bool gameOver = false;
 
@@ -66,6 +74,34 @@ public class TurnManager : MonoBehaviour
         if (turnIndicatorLabel == null)
         {
             Debug.Log("ℹ️ turnIndicator label not found in UI - using console logs only");
+        }
+        
+        // Setup Game Over UI
+        gameOverPanel = root.Q<VisualElement>("gameOverPanel");
+        winnerLabel = root.Q<Label>("winnerLabel");
+        resetGameButton = root.Q<Button>("resetGameButton");
+        
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.style.display = DisplayStyle.None;
+        }
+        
+        if (resetGameButton != null)
+        {
+            resetGameButton.clicked += ResetGame;
+        }
+        
+        // Setup timing settings UI
+        Toggle autoSwitchToggle = root.Q<Toggle>("autoSwitchPerspectiveToggle");
+        
+        if (autoSwitchToggle != null)
+        {
+            autoSwitchToggle.value = autoSwitchPerspective;
+            autoSwitchToggle.RegisterValueChangedCallback(evt =>
+            {
+                autoSwitchPerspective = evt.newValue;
+                Debug.Log($"📷 Auto switch perspective: {(autoSwitchPerspective ? "ENABLED" : "DISABLED")}");
+            });
         }
         
         UpdateTurnUI();
@@ -153,12 +189,16 @@ public class TurnManager : MonoBehaviour
             }
         }
         
-        // Return camera to the OTHER player (the one about to play next)
-        if (cameraHandler != null)
+        // Return camera to the OTHER player (the one about to play next) if auto switch is enabled
+        if (autoSwitchPerspective && cameraHandler != null)
         {
             Transform otherPlayer = isPlayerATurn ? playerB : playerA;
             cameraHandler.ReturnToPlayer(otherPlayer);
             Debug.Log($"📷 Camera returning to {(isPlayerATurn ? "Player B" : "Player A")} after landing");
+        }
+        else if (!autoSwitchPerspective)
+        {
+            Debug.Log($"📷 Auto switch OFF - camera stays at current position");
         }
     }
     
@@ -218,7 +258,6 @@ public class TurnManager : MonoBehaviour
         if (cameraHandler != null && playerA != null)
         {
             cameraHandler.SwitchToTargetPreserveZoom(playerA);
-            // Refresh follow state so next fire auto-follows if toggle is ON
             cameraHandler.HardRefreshFollowState();
         }
         
@@ -246,7 +285,6 @@ public class TurnManager : MonoBehaviour
         if (cameraHandler != null && playerB != null)
         {
             cameraHandler.SwitchToTargetPreserveZoom(playerB);
-            // Refresh follow state so next fire auto-follows if toggle is ON
             cameraHandler.HardRefreshFollowState();
         }
         
@@ -323,13 +361,101 @@ public class TurnManager : MonoBehaviour
         
         Debug.Log($"🎉🏆 GAME OVER - {winner} WINS! 🏆🎉");
         
+        // Show Game Over panel after 5 second delay (let death animation play)
+        Invoke(nameof(ShowGameOverPanel), 5f);
+        
         // Update UI labels if they exist
         if (turnIndicatorLabel != null)
         {
             turnIndicatorLabel.text = $"🎉 {winner} WINS! 🎉";
             turnIndicatorLabel.style.color = Color.green;
-            turnIndicatorLabel.style.fontSize = 32;
+            // Keep font size the same, don't make it bigger
         }
+    }
+    
+    private void ShowGameOverPanel()
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.style.display = DisplayStyle.Flex;
+            
+            if (winnerLabel != null)
+            {
+                // Extract winner name from turn indicator
+                string winner = isPlayerATurn ? "Player A" : "Player B";
+                winnerLabel.text = $"{winner} Wins!";
+            }
+        }
+    }
+    
+    private void ResetGame()
+    {
+        Debug.Log("🔄 Resetting game...");
+        
+        // Hide game over panel
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.style.display = DisplayStyle.None;
+        }
+        
+        // Reset game state
+        gameOver = false;
+        isPlayerATurn = true;
+        canFire = true;
+        cooldownTimer = 0f;
+        
+        // Restore players
+        if (playerAHandler != null)
+        {
+            playerAHandler.isAlive = true;
+            // Restore transparency
+            Renderer rendA = playerAHandler.GetComponent<Renderer>();
+            if (rendA != null)
+            {
+                Material matA = rendA.material;
+                Color colorA = matA.color;
+                colorA.a = 1f;
+                matA.color = colorA;
+            }
+            // Re-enable collider
+            Collider colA = playerAHandler.GetComponent<Collider>();
+            if (colA != null) colA.enabled = true;
+        }
+        
+        if (playerBHandler != null)
+        {
+            playerBHandler.isAlive = true;
+            // Restore transparency
+            Renderer rendB = playerBHandler.GetComponent<Renderer>();
+            if (rendB != null)
+            {
+                Material matB = rendB.material;
+                Color colorB = matB.color;
+                colorB.a = 1f;
+                matB.color = colorB;
+            }
+            // Re-enable collider
+            Collider colB = playerBHandler.GetComponent<Collider>();
+            if (colB != null) colB.enabled = true;
+        }
+        
+        // Destroy all existing projectiles
+        GameObject[] projectiles = GameObject.FindGameObjectsWithTag("Projectile");
+        foreach (GameObject proj in projectiles)
+        {
+            Destroy(proj);
+        }
+        
+        // Re-enable fire button
+        if (fireButton != null)
+        {
+            fireButton.SetEnabled(true);
+        }
+        
+        // Switch back to Player A
+        SwitchToPlayerA();
+        
+        Debug.Log("✅ Game reset complete!");
     }
     
     public bool CanCurrentPlayerFire()

@@ -1,2 +1,13 @@
 fileFormatVersion: 2
 guid: 8d7002bad29b2294b845cdb969628906
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - magicCirclePrefab: {instanceID: 0}
+  - playerDeathEffectPrefab: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

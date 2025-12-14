@@ -26,6 +26,14 @@
     <engine:Button text="⚙️ Settings" name="settingsButton" 
         style="position: absolute; top: 20px; left: 20px; 
             width: 120px; height: 40px;" />
+
+    <!-- Current Turn Indicator (Top Center, offset to avoid top-right controls) -->
+    <engine:Label text="Player A's Turn" name="turnIndicator"
+        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: rgb(255, 235, 120);
+            padding-left: 10px; padding-right: 10px; padding-top: 6px; padding-bottom: 6px;
+            border-radius: 8px; font-size: 18px; -unity-font-style: bold;" />
     
     <!-- Formula Guide Button (Below Settings) - Mid Z-index -->
     <engine:Button text="📐 Formulas" name="formulaGuideButton" 
@@ -53,7 +61,7 @@
             justify-content: center; align-items: center;
             display: none;">
         
-        <engine:VisualElement style="width: 600px; height: 400px;
+        <engine:VisualElement style="width: 600px; height: 550px;
             background-color: rgba(20, 20, 20, 0.98); 
             padding: 30px; border-radius: 15px; 
             border-width: 3px; border-color: rgb(255, 200, 0);">
@@ -64,10 +72,18 @@
                     -unity-font-style: bold;" />
             
             <engine:DropdownField label="Control Mode" name="controlModeDropdown" 
-                style="margin-bottom: 20px; font-size: 16px;" />
+                style="margin-bottom: 20px; font-size: 16px; color: rgb(220, 220, 220);" />
+            
+            <engine:Label text="Camera Settings" 
+                style="font-size: 18px; color: rgb(100, 255, 200); 
+                    margin-top: 20px; margin-bottom: 15px;
+                    -unity-font-style: bold;" />
+            
+            <engine:Toggle label="Auto Switch Perspective" name="autoSwitchPerspectiveToggle" 
+                style="margin-bottom: 30px; font-size: 14px; color: rgb(220, 220, 220);" />
             
             <engine:Button text="Close" name="closeSettingsButton" 
-                style="margin-top: 40px; height: 50px; font-size: 18px;
+                style="margin-top: 20px; height: 50px; font-size: 18px;
                     background-color: rgb(200, 50, 50);" />
         </engine:VisualElement>
     </engine:VisualElement>
@@ -96,6 +112,37 @@
             <engine:Button text="Close" name="closeFormulaButton" 
                 style="height: 50px; background-color: rgb(200, 50, 50);
                     font-size: 18px;" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+    
+    <!-- Game Over / Reset Panel - FULL SCREEN -->
+    <engine:VisualElement name="gameOverPanel" 
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center; align-items: center;
+            display: none;">
+        
+        <engine:VisualElement style="width: 500px; height: 350px;
+            background-color: rgba(40, 10, 10, 0.98); 
+            padding: 40px; border-radius: 20px; 
+            border-width: 4px; border-color: rgb(255, 100, 100);
+            justify-content: center; align-items: center;">
+            
+            <engine:Label text="GAME OVER!" name="gameOverTitle"
+                style="font-size: 42px; -unity-text-align: middle-center; 
+                    color: rgb(255, 80, 80); margin-bottom: 20px;
+                    -unity-font-style: bold;" />
+            
+            <engine:Label text="Player A Wins!" name="winnerLabel"
+                style="font-size: 28px; -unity-text-align: middle-center; 
+                    color: rgb(255, 200, 100); margin-bottom: 40px;
+                    -unity-font-style: bold;" />
+            
+            <engine:Button text="🔄 Reset Game" name="resetGameButton" 
+                style="height: 60px; width: 300px; font-size: 22px;
+                    background-color: rgb(100, 200, 100);
+                    border-radius: 10px;" />
         </engine:VisualElement>
     </engine:VisualElement>
     
