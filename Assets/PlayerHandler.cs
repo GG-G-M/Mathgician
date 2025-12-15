@@ -36,6 +36,15 @@ public class PlayerHandler : MonoBehaviour
             mat.color = color;
         }
 
+        // Freeze player in place - prevent flying away
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true; // Freeze physics completely
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+
         // Optional: Disable collider so it can't be hit again
         Collider col = GetComponent<Collider>();
         if (col != null)

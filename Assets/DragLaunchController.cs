@@ -6,6 +6,7 @@ public class DragLaunchController : MonoBehaviour
     [Header("Drag Settings")]
     public float maxDragDistance = 5f; // ★★★ INCREASED from 3f
     public float velocityMultiplier = 10f;
+    public Transform firePoint; // StaffTip - where projectile fires from
     public LineRenderer trajectoryLine;
     public int trajectoryPoints = 30;
     public float trajectoryTimeStep = 0.1f;
@@ -213,7 +214,7 @@ public class DragLaunchController : MonoBehaviour
             if (IsMouseOverObject())
             {
                 isDragging = true;
-                dragStartPos = transform.position;
+                dragStartPos = firePoint != null ? firePoint.position : transform.position;
                 SetInputFieldsInteractable(false);
                 Debug.Log($"✅ Started dragging {gameObject.name}");
                 return;
@@ -334,6 +335,7 @@ public class DragLaunchController : MonoBehaviour
         if (trajectoryLine == null) return;
         
         Vector3 velocity = dragVector * velocityMultiplier;
+        Vector3 startPos = firePoint != null ? firePoint.position : dragStartPos;
         Vector3[] points = new Vector3[trajectoryPoints];
         bool predictedPlaced = false;
         bool drawPredicted = false; // disabled per request
@@ -341,7 +343,7 @@ public class DragLaunchController : MonoBehaviour
         for (int i = 0; i < trajectoryPoints; i++)
         {
             float time = i * trajectoryTimeStep;
-            points[i] = CalculatePositionAtTime(dragStartPos, velocity, time);
+            points[i] = CalculatePositionAtTime(startPos, velocity, time);
             
             // Stop if trajectory goes below ground
             if (points[i].y < 0)

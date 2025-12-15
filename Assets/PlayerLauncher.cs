@@ -8,7 +8,7 @@ public class PlayerLauncher : MonoBehaviour
 
     [Header("Projectile")]
     public GameObject projectilePrefab;
-    public Transform firePoint;
+    public Transform firePoint; // Assign StaffTip transform here
 
     [Header("Trail Prefab")]
     public GameObject trailPrefab;
