@@ -11,6 +11,8 @@ public class Projectile : MonoBehaviour
     public GameObject playerHitEffectPrefab;
     [Tooltip("Lifetime of player hit effect (seconds)")]
     public float playerHitEffectDuration = 1f;
+    [Tooltip("Midair effect attached while projectile is flying (e.g., CFXR Electrified 3)")]
+    public GameObject midairEffectPrefab;
     
     private Rigidbody rb;
     private Collider col;
@@ -29,6 +31,7 @@ public class Projectile : MonoBehaviour
     
     // Physics display reference
     private ProjectilePhysicsDisplay physicsDisplay;
+    private GameObject midairEffectInstance;
     
     // Turn manager reference
     private TurnManager turnManager;
@@ -58,6 +61,12 @@ public class Projectile : MonoBehaviour
         {
             physicsDisplay = gameObject.AddComponent<ProjectilePhysicsDisplay>();
             Debug.Log("✅ ProjectilePhysicsDisplay added automatically!");
+        }
+
+        // Attach midair effect if assigned
+        if (midairEffectPrefab != null)
+        {
+            midairEffectInstance = Instantiate(midairEffectPrefab, transform.position, Quaternion.identity, transform);
         }
     }
     
@@ -124,6 +133,20 @@ public class Projectile : MonoBehaviour
         }
 
         FreezeProjectile();
+
+        // Hide projectile visuals immediately on impact
+        Renderer projectileRenderer = GetComponent<Renderer>();
+        if (projectileRenderer != null)
+        {
+            projectileRenderer.enabled = false;
+        }
+        // Remove midair effect
+        if (midairEffectInstance != null)
+        {
+            Destroy(midairEffectInstance);
+            midairEffectInstance = null;
+        }
+        
         // Notify physics display of landing to finalize timings/labels
         if (physicsDisplay != null)
         {

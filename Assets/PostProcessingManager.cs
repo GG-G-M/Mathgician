@@ -18,6 +18,7 @@ public class PostProcessingManager : MonoBehaviour
     private Bloom bloom;
     private Vignette vignette;
     private MotionBlur motionBlur;
+    private PostProcessLayer postProcessLayer;
     
     private void Start()
     {
@@ -45,7 +46,17 @@ public class PostProcessingManager : MonoBehaviour
         
         if (postProcessVolume.profile.TryGetSettings(out motionBlur))
         {
+            // Default motion blur ON
+            motionBlurEnabled = true;
             motionBlur.active = motionBlurEnabled;
+        }
+        
+        // Configure antialiasing on the camera's PostProcessLayer (FXAA default)
+        postProcessLayer = FindFirstObjectByType<PostProcessLayer>();
+        if (postProcessLayer != null)
+        {
+            postProcessLayer.antialiasingMode = PostProcessLayer.Antialiasing.FastApproximateAntialiasing;
+            // fastApproximateAntialiasing is a struct; setting antialiasingMode is sufficient
         }
         
         SetupUI();
@@ -77,7 +88,7 @@ public class PostProcessingManager : MonoBehaviour
         Toggle motionBlurToggle = root.Q<Toggle>("motionBlurToggle");
         if (motionBlurToggle != null)
         {
-            motionBlurToggle.value = motionBlurEnabled;
+            motionBlurToggle.value = motionBlurEnabled; // defaults to true
             motionBlurToggle.RegisterValueChangedCallback(evt => SetMotionBlur(evt.newValue));
         }
     }

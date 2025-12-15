@@ -432,6 +432,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 2602231374797837620, guid: 855c90c429434444fbe3ca2b5507ab04, type: 3}
+    - {fileID: 2602231374797837611, guid: 855c90c429434444fbe3ca2b5507ab04, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -796,16 +797,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerA: {fileID: 1473696175}
-  playerB: {fileID: 0}
+  playerB: {fileID: 1756462377}
   playerALauncher: {fileID: 1473696178}
-  playerBLauncher: {fileID: 0}
+  playerBLauncher: {fileID: 1756462381}
   playerAHandler: {fileID: 1473696179}
-  playerBHandler: {fileID: 0}
+  playerBHandler: {fileID: 1756462380}
   cameraHandler: {fileID: 869808525}
   cameraShake: {fileID: 869808531}
   uiDocument: {fileID: 2055560783}
   gameModeManager: {fileID: 869808527}
-  settingsManager: {fileID: 0}
+  settingsManager: {fileID: 869808528}
   fireCooldown: 2
   autoSwitchPerspective: 1
 --- !u!114 &869808527
@@ -822,7 +823,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 2055560783}
   currentGameMode: 0
-  settingsManager: {fileID: 0}
+  settingsManager: {fileID: 869808528}
   minAngle: 20
   maxAngle: 70
   minVelocity: 10
@@ -840,7 +841,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiDocument: {fileID: 2055560783}
-  postProcessingManager: {fileID: 0}
+  postProcessingManager: {fileID: 2018945770}
   currentControlMode: 0
 --- !u!114 &869808529
 MonoBehaviour:
@@ -1006,6 +1007,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 5446477390807014375, guid: b713585f24f940f4eadb10319818ef40, type: 3}
+    - {fileID: 5446477390807014372, guid: b713585f24f940f4eadb10319818ef40, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1762,7 +1764,7 @@ MonoBehaviour:
   postProcessVolume: {fileID: 1873239790}
   bloomEnabled: 1
   vignetteEnabled: 1
-  motionBlurEnabled: 0
+  motionBlurEnabled: 1
   uiDocument: {fileID: 2055560783}
 --- !u!4 &2018945771
 Transform:

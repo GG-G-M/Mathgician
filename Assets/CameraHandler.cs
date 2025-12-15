@@ -468,6 +468,7 @@ public class CameraHandler : MonoBehaviour
             // Smoothly transition back with preserved zoom
             Vector3 targetPos = targetPlayer.position + playerOffset;
             velocity = Vector3.zero; // Reset velocity for smooth damp
+            transform.position = Vector3.SmoothDamp(transform.position, targetPos, ref velocity, smoothSpeed);
             Debug.Log($"📷 Returning to {targetPlayer.name} with preserved zoom");
         }
     }
