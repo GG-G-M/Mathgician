@@ -32,17 +32,38 @@ public class SettingsManager : MonoBehaviour
         SetupUI();
         playerLaunchers = FindObjectsByType<PlayerLauncher>(FindObjectsSortMode.None);
         ApplyControlMode();
+        
+        // Additional check after a frame to ensure UI is ready
+        Invoke(nameof(VerifyUISetup), 0.5f);
+    }
+    
+    private void VerifyUISetup()
+    {
+        if (settingsButton == null || settingsPanel == null)
+        {
+            Debug.LogError("⚠️ UI not properly set up! Attempting re-setup...");
+            SetupUI();
+        }
+        else
+        {
+            Debug.Log($"✅ UI verified: Button={settingsButton != null}, Panel={settingsPanel != null}");
+        }
     }
     
     private void SetupUI()
     {
         if (uiDocument == null)
         {
-            Debug.LogWarning("⚠️ UIDocument not assigned to SettingsManager!");
+            Debug.LogError("⚠️ UIDocument not assigned to SettingsManager in Inspector!");
             return;
         }
         
         var root = uiDocument.rootVisualElement;
+        if (root == null)
+        {
+            Debug.LogError("⚠️ UIDocument root is NULL!");
+            return;
+        }
         
         // Query for settings button and panel
         settingsButton = root.Q<Button>("settingsButton");
@@ -50,15 +71,20 @@ public class SettingsManager : MonoBehaviour
         closeSettingsButton = root.Q<Button>("closeSettingsButton");
         controlModeDropdown = root.Q<DropdownField>("controlModeDropdown");
         
+        Debug.Log($"UI Query Results: settingsButton={settingsButton != null}, settingsPanel={settingsPanel != null}");
+        
         // Setup settings button
         if (settingsButton != null)
         {
-            settingsButton.clicked += ToggleSettingsPanel;
-            Debug.Log("✅ Settings button found!");
+            settingsButton.RegisterCallback<ClickEvent>(OnSettingsButtonClicked);
+            Debug.Log("✅ Settings button found and clicked handler registered!");
+            
+            // Verify button is visible and enabled
+            Debug.Log($"Settings button enabled: {settingsButton.enabledSelf}, visible: {settingsButton.visible}");
         }
         else
         {
-            Debug.LogWarning("⚠️ 'settingsButton' not found in UI! Add a Button with name='settingsButton'");
+            Debug.LogError("⚠️ 'settingsButton' not found in UI! Add a Button with name='settingsButton'");
         }
         
         // Setup settings panel
@@ -116,14 +142,35 @@ public class SettingsManager : MonoBehaviour
         // Predicted impact toggle removed per request
     }
     
+    private void OnSettingsButtonClicked(ClickEvent evt)
+    {
+        evt.StopPropagation();
+        ToggleSettingsPanel();
+    }
+    
     private void ToggleSettingsPanel()
     {
-        if (settingsPanel == null) return;
+        if (settingsPanel == null)
+        {
+            Debug.LogError("❌ settingsPanel is NULL! Cannot toggle.");
+            return;
+        }
         
         bool isVisible = settingsPanel.style.display == DisplayStyle.Flex;
-        settingsPanel.style.display = isVisible ? DisplayStyle.None : DisplayStyle.Flex;
         
-        Debug.Log(isVisible ? "⚙️ Settings closed" : "⚙️ Settings opened");
+        if (isVisible)
+        {
+            settingsPanel.style.display = DisplayStyle.None;
+            settingsPanel.visible = false;
+            Debug.Log("⚙️ Settings closed");
+        }
+        else
+        {
+            settingsPanel.style.display = DisplayStyle.Flex;
+            settingsPanel.visible = true;
+            settingsPanel.BringToFront();
+            Debug.Log("⚙️ Settings opened and brought to front");
+        }
     }
     
     private void CloseSettingsPanel()

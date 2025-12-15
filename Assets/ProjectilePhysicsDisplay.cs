@@ -4,11 +4,11 @@ public class ProjectilePhysicsDisplay : MonoBehaviour
 {
     [Header("3D Text Settings")]
     public int fontSize = 24; // Normal size for readability
-    public Color maxHeightColor = Color.magenta;
-    public Color initialVelocityColor = Color.green;
-    public Color timeColor = Color.yellow;
-    public Color rangeColor = Color.cyan;
-    public Color velocityComponentsColor = new Color(1f, 0.7f, 0f); // orange
+    public Color maxHeightColor = Color.black;
+    public Color initialVelocityColor = Color.black;
+    public Color timeColor = Color.black;
+    public Color rangeColor = Color.black;
+    public Color velocityComponentsColor = Color.black;
     public Color velocityArrowColor = new Color(0.2f, 1f, 0.8f);
     public Color apexMarkerColor = Color.magenta;
     
@@ -112,7 +112,7 @@ public class ProjectilePhysicsDisplay : MonoBehaviour
         {
             quarterLabels[i] = new GameObject($"FlightLabel_t{(i+1)*25}");
             quarterTexts[i] = quarterLabels[i].AddComponent<TextMesh>();
-            ConfigureTextMesh(quarterTexts[i], new Color(1f, 1f, 1f));
+            ConfigureTextMesh(quarterTexts[i], Color.black); // Use black for visibility
             quarterTexts[i].text = "";
             quarterPlaced[i] = false;
         }

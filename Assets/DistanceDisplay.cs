@@ -18,7 +18,7 @@ public class DistanceDisplay : MonoBehaviour
     [Header("3D Text Settings")]
     public Font textFont; // Leave null to use default Arial
     public int fontSize = 40; // ★★★ INCREASED from 20
-    public Color textColor = Color.white;
+    public Color textColor = Color.black; // Changed to black for visibility on light backgrounds
 
     // UI Elements (optional)
     private Label straightDistanceText;
@@ -79,17 +79,17 @@ public class DistanceDisplay : MonoBehaviour
         // Straight distance label - BRIGHT CYAN for high visibility
         straightDistanceLabel = new GameObject("StraightDistanceLabel");
         straightTextMesh = straightDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(straightTextMesh, new Color(0f, 1f, 1f, 1f)); // Bright cyan
+        ConfigureTextMesh(straightTextMesh, Color.black);
         
         // Horizontal distance label - BRIGHT YELLOW for high visibility
         horizontalDistanceLabel = new GameObject("HorizontalDistanceLabel");
         horizontalTextMesh = horizontalDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(horizontalTextMesh, new Color(1f, 1f, 0f, 1f)); // Bright yellow
+        ConfigureTextMesh(horizontalTextMesh, Color.black);
         
         // Vertical distance label - BRIGHT GREEN for high visibility
         verticalDistanceLabel = new GameObject("VerticalDistanceLabel");
         verticalTextMesh = verticalDistanceLabel.AddComponent<TextMesh>();
-        ConfigureTextMesh(verticalTextMesh, new Color(0f, 1f, 0f, 1f)); // Bright green
+        ConfigureTextMesh(verticalTextMesh, Color.black);
         
         Debug.Log("✅ 3D distance labels created!");
     }

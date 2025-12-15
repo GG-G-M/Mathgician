@@ -11,8 +11,9 @@ public class CameraHandler : MonoBehaviour
     [Header("Drag & Scroll Settings")]
     public float dragSpeed = 20f;
     public float scrollSpeed = 20f;
-    public float minZoom = 3f;
-    public float maxZoom = 40f;
+    public float minZoom = -30f; // Farthest Z (zoomed out)
+    public float maxZoom = -3f;  // Closest Z (zoomed in)
+    public float minY = 1f;      // Don't go below Y=1
 
     [Header("UI Document")]
     public UIDocument uiDocument;
@@ -33,6 +34,14 @@ public class CameraHandler : MonoBehaviour
     private Vector3 currentOffset;
     private Vector3 playerOffset; // Separate offset for players to preserve zoom
     
+    // Zoom state
+    private float desiredZ;            // Target world Z for smooth zooming
+    private float zoomVelocity = 0f;   // SmoothDamp velocity
+    public float zoomSmoothTime = 0.08f; // Smoothing duration per step
+    public float zoomStep = 1f;        // Z units per wheel notch
+    private float lastScrollTime = 0f; // Debounce for wheel notches
+    public float scrollDebounce = 0.06f;
+    
     private VisualElement settingsPanel;
     private VisualElement formulaPanel;
     
@@ -52,6 +61,7 @@ public class CameraHandler : MonoBehaviour
         playerOffset = startOffset; // Initialize player offset
         initialPosition = cameraTarget.position + currentOffset;
         transform.position = initialPosition;
+        desiredZ = transform.position.z;
 
         SetupUIToggle();
         
@@ -267,6 +277,17 @@ public class CameraHandler : MonoBehaviour
         if (isInFreeMode)
         {
             transform.rotation = Quaternion.Euler(0, 0, 0);
+            // Smoothly approach desired Z while in free mode
+            if (Mathf.Abs(transform.position.z - desiredZ) > 0.0001f)
+            {
+                float newZ = Mathf.SmoothDamp(transform.position.z, desiredZ, ref zoomVelocity, zoomSmoothTime);
+                Vector3 pos = transform.position;
+                pos.z = newZ;
+                if (pos.y < minY) pos.y = minY;
+                transform.position = pos;
+            }
+            // Enforce limits even in free mode
+            EnforceCameraLimits();
             return;
         }
         else if (currentTarget != null && !isDragging)
@@ -293,10 +314,53 @@ public class CameraHandler : MonoBehaviour
             }
             
             transform.rotation = Quaternion.Euler(0, 0, 0);
+            // Enforce limits after following
+            EnforceCameraLimits();
         }
         else if (currentTarget == null && !isDragging && !followModeEnabled)
         {
             currentTarget = cameraTarget;
+        }
+    }
+    
+    private void EnforceCameraLimits()
+    {
+        Vector3 pos = transform.position;
+        bool changed = false;
+        
+        // Clamp Z (zoom depth) with safe ordering
+        float zMin = Mathf.Min(minZoom, maxZoom);
+        float zMax = Mathf.Max(minZoom, maxZoom);
+        if (pos.z < zMin)
+        {
+            pos.z = zMin;
+            changed = true;
+        }
+        else if (pos.z > zMax)
+        {
+            pos.z = zMax;
+            changed = true;
+        }
+        
+        // Clamp Y (height above ground)
+        if (pos.y < minY)
+        {
+            pos.y = minY;
+            changed = true;
+        }
+        
+        if (changed)
+        {
+            transform.position = pos;
+            // Update offsets if we clamped
+            if (currentTarget != null)
+            {
+                currentOffset = transform.position - currentTarget.position;
+                if (currentTarget.GetComponent<Projectile>() == null)
+                {
+                    playerOffset = currentOffset;
+                }
+            }
         }
     }
 
@@ -354,6 +418,9 @@ public class CameraHandler : MonoBehaviour
             
             dragStartPosition = currentPos;
             freeModePosition = transform.position;
+            
+            // Enforce limits during drag
+            EnforceCameraLimits();
         }
 
         if (Input.GetMouseButtonUp(0))
@@ -369,38 +436,45 @@ public class CameraHandler : MonoBehaviour
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (Mathf.Abs(scroll) > 0.01f)
         {
-            Vector3 zoomDir = transform.forward * scroll * scrollSpeed;
-            transform.position += zoomDir;
+            // Debounce to one step per notch
+            if (Time.unscaledTime - lastScrollTime < scrollDebounce)
+            {
+                return;
+            }
+            lastScrollTime = Time.unscaledTime;
 
-            // Update playerOffset if currently following a player
-            if (currentTarget != null && currentTarget.GetComponent<Projectile>() == null)
-            {
-                playerOffset = transform.position - currentTarget.position;
-            }
-            // Also update currentOffset for backward compatibility
-            if (currentTarget != null)
-            {
-                currentOffset = transform.position - currentTarget.position;
-            }
+            // Scroll up should zoom IN toward -3 (increase Z toward zero)
+            float direction = Mathf.Sign(scroll); // +1 up, -1 down
+            float zMin = Mathf.Min(minZoom, maxZoom);
+            float zMax = Mathf.Max(minZoom, maxZoom);
+            float currentZ = transform.position.z;
+            float nextZ = Mathf.Round(currentZ + direction * zoomStep);
+            desiredZ = Mathf.Clamp(nextZ, zMin, zMax);
 
-            float currentHeight = transform.position.y;
-            if (currentHeight < minZoom)
-            {
-                transform.position = new Vector3(transform.position.x, minZoom, transform.position.z);
-            }
-            else if (currentHeight > maxZoom)
-            {
-                transform.position = new Vector3(transform.position.x, maxZoom, transform.position.z);
-            }
-            
+            // Enter free roam when manually zooming
             if (!isInFreeMode)
             {
                 isInFreeMode = true;
                 currentTarget = null;
                 Debug.Log("🔒 Entered free roam mode (zooming)");
             }
-            
+
+            // Clamp Y immediately to avoid sinking below ground
+            if (transform.position.y < minY)
+            {
+                transform.position = new Vector3(transform.position.x, minY, transform.position.z);
+            }
+
             freeModePosition = transform.position;
+
+            // Update offsets so zoom persists when returning to a player
+            if (lastPlayerTarget != null)
+            {
+                // Compute a player-relative Z offset matching desired world Z
+                float newOffsetZ = desiredZ - lastPlayerTarget.position.z;
+                playerOffset = new Vector3(playerOffset.x, playerOffset.y, newOffsetZ);
+                currentOffset = playerOffset;
+            }
         }
     }
 
